@@ -1,0 +1,1057 @@
+/* ==========================================================================
+   Smartcvmaker Admin Theme Stylesheet
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap');
+
+:root {
+  --vx-primary: #7367f0;
+  --vx-primary-hover: #685dd8;
+  --vx-primary-active: #5e54c2;
+  --vx-primary-rgb: 115, 103, 240;
+  --vx-primary-light: #e8e7fd;
+
+  --vx-secondary: #808390;
+  --vx-secondary-light: #f1f1f2;
+
+  --vx-success: #28c76f;
+  --vx-success-light: #dcf6e8;
+
+  --vx-danger: #ea5455;
+  --vx-danger-light: #fee2e2;
+
+  --vx-warning: #ff9f43;
+  --vx-warning-light: #fff0e1;
+
+  --vx-info: #00bad1;
+  --vx-info-light: #d8f8fa;
+
+  --vx-dark: #2f2b3d;
+  --vx-heading: #2f2b3d;
+  --vx-body: #444050;
+  --vx-muted: #8b8893;
+  --vx-border: rgba(47, 43, 61, 0.14);
+  --vx-border-light: rgba(47, 43, 61, 0.08);
+  --vx-bg: #f8f7fa;
+  --vx-card-bg: #ffffff;
+
+  --vx-shadow-sm: 0 0.125rem 0.25rem rgba(165, 163, 174, 0.3);
+  --vx-shadow-md: 0 2px 6px 0 rgba(47, 43, 61, 0.14);
+  --vx-shadow-primary: 0 2px 6px 0 rgba(115, 103, 240, 0.48);
+  --vx-shadow-danger: 0 2px 6px 0 rgba(234, 84, 85, 0.45);
+
+  --vx-font-family: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --vx-radius: 8px;
+  --vx-radius-sm: 6px;
+  --vx-radius-pill: 50rem;
+}
+
+/* Base resets & typography */
+.vuexy-wrapper {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--vx-bg);
+  font-family: var(--vx-font-family);
+  color: var(--vx-body);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+
+.vuexy-wrapper * {
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   SIDEBAR (Vertical Menu)
+   ========================================================================== */
+.vuexy-sidebar {
+  width: 260px;
+  background-color: var(--vx-card-bg);
+  border-right: 1px solid var(--vx-border);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  flex-shrink: 0;
+  z-index: 1050;
+  transition: width 0.25s ease-in-out;
+}
+
+.vuexy-sidebar.collapsed {
+  width: 82px;
+}
+
+/* Sidebar Brand Header */
+.vuexy-brand-header {
+  height: 64px;
+  padding: 0 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid transparent;
+}
+
+.vuexy-brand-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--vx-heading);
+  overflow: hidden;
+}
+
+.vuexy-brand-logo {
+  width: 32px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.vuexy-brand-text {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--vx-heading);
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+}
+
+.vuexy-sidebar-toggle {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--vx-heading);
+  opacity: 0.65;
+  transition: opacity 0.2s;
+  padding: 0;
+}
+
+.vuexy-sidebar-toggle:hover {
+  opacity: 1;
+}
+
+/* Sidebar Navigation Items */
+.vuexy-menu {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.5rem 0.75rem 2rem;
+  list-style: none;
+  margin: 0;
+}
+
+.vuexy-menu::-webkit-scrollbar {
+  width: 4px;
+}
+.vuexy-menu::-webkit-scrollbar-thumb {
+  background: rgba(47, 43, 61, 0.15);
+  border-radius: 4px;
+}
+
+.vuexy-menu-header {
+  padding: 1rem 1rem 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--vx-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+}
+
+.vuexy-menu-item {
+  margin-bottom: 2px;
+}
+
+.vuexy-menu-link {
+  display: flex;
+  align-items: center;
+  padding: 0.55rem 0.85rem;
+  border-radius: var(--vx-radius-sm);
+  color: var(--vx-body);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  font-size: 0.9rem;
+  font-weight: 400;
+  white-space: nowrap;
+  position: relative;
+}
+
+.vuexy-menu-link:hover {
+  background-color: rgba(47, 43, 61, 0.04);
+  color: var(--vx-primary);
+}
+
+.vuexy-menu-link.active {
+  background: linear-gradient(72.47deg, #7367f0 22.16%, rgba(115, 103, 240, 0.7) 76.47%) !important;
+  color: #ffffff !important;
+  font-weight: 500;
+  box-shadow: var(--vx-shadow-primary);
+}
+
+.vuexy-menu-link.active .vuexy-menu-icon,
+.vuexy-menu-link.active .vuexy-menu-text {
+  color: #ffffff !important;
+}
+
+.vuexy-menu-icon {
+  width: 22px;
+  height: 22px;
+  margin-right: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--vx-muted);
+}
+
+.vuexy-menu-link:hover .vuexy-menu-icon {
+  color: var(--vx-primary);
+}
+
+.vuexy-menu-text {
+  flex: 1;
+}
+
+.vuexy-menu-badge {
+  padding: 2px 7px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: var(--vx-radius-pill);
+  margin-left: auto;
+}
+
+.vuexy-menu-arrow {
+  margin-left: auto;
+  font-size: 0.75rem;
+  opacity: 0.6;
+  transition: transform 0.2s ease;
+}
+
+.vuexy-menu-arrow.expanded {
+  transform: rotate(90deg);
+}
+
+/* Submenu */
+.vuexy-submenu {
+  list-style: none;
+  padding: 0.25rem 0 0.25rem 2.2rem;
+  margin: 0;
+}
+
+.vuexy-submenu .vuexy-menu-link {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.86rem;
+}
+
+/* ==========================================================================
+   PAGE LAYOUT & CONTAINER
+   ========================================================================== */
+.vuexy-layout-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100vh;
+}
+
+/* Floating Detached Top Navbar */
+.vuexy-navbar {
+  margin: 0.85rem 1.75rem 0;
+  padding: 0.65rem 1.25rem;
+  background-color: var(--vx-card-bg);
+  border-radius: var(--vx-radius);
+  box-shadow: var(--vx-shadow-md);
+  border: 1px solid var(--vx-border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 12px;
+  z-index: 1000;
+}
+
+.vuexy-navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.vuexy-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--vx-muted);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  font-size: 0.9rem;
+  width: 100%;
+  max-width: 320px;
+}
+
+.vuexy-search-box input {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--vx-heading);
+  width: 100%;
+}
+
+.vuexy-search-box input::placeholder {
+  color: var(--vx-muted);
+}
+
+.vuexy-navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vuexy-nav-icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--vx-radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--vx-heading);
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+  font-size: 1.15rem;
+  padding: 0;
+}
+
+.vuexy-nav-icon-btn:hover {
+  background-color: rgba(47, 43, 61, 0.06);
+}
+
+.vuexy-badge-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--vx-danger);
+  border: 1.5px solid var(--vx-card-bg);
+}
+
+/* User Avatar with Green Dot Indicator */
+.vuexy-user-avatar {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.vuexy-user-avatar.online::after {
+  content: '';
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--vx-success);
+  border: 2px solid var(--vx-card-bg);
+}
+
+/* Main Content Area */
+.vuexy-content {
+  flex: 1;
+  padding: 1.5rem 1.75rem;
+}
+
+/* ==========================================================================
+   STAT METRIC CARDS ROW (4 Cards)
+   ========================================================================== */
+.vuexy-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+  .vuexy-stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .vuexy-stat-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vuexy-stat-card {
+  background-color: var(--vx-card-bg);
+  border-radius: var(--vx-radius-sm);
+  padding: 1.35rem 1.5rem;
+  box-shadow: var(--vx-shadow-sm);
+  border: 1px solid var(--vx-border-light);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.vuexy-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(47, 43, 61, 0.1);
+}
+
+.vuexy-stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.vuexy-stat-title {
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--vx-heading);
+  margin-bottom: 4px;
+}
+
+.vuexy-stat-val-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 2px 0 4px;
+}
+
+.vuexy-stat-number {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--vx-heading);
+  line-height: 1.2;
+}
+
+.vuexy-stat-badge {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.vuexy-stat-badge.positive {
+  color: var(--vx-success);
+}
+
+.vuexy-stat-badge.negative {
+  color: var(--vx-danger);
+}
+
+.vuexy-stat-subtitle {
+  font-size: 0.8125rem;
+  color: var(--vx-muted);
+}
+
+/* Pastel Icon Avatar Bubble */
+.vuexy-stat-icon-bubble {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--vx-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+
+.vuexy-stat-icon-bubble.primary {
+  background-color: var(--vx-primary-light);
+  color: var(--vx-primary);
+}
+
+.vuexy-stat-icon-bubble.danger {
+  background-color: var(--vx-danger-light);
+  color: var(--vx-danger);
+}
+
+.vuexy-stat-icon-bubble.success {
+  background-color: var(--vx-success-light);
+  color: var(--vx-success);
+}
+
+.vuexy-stat-icon-bubble.warning {
+  background-color: var(--vx-warning-light);
+  color: var(--vx-warning);
+}
+
+/* ==========================================================================
+   CARDS COMMON
+   ========================================================================== */
+.vuexy-card {
+  background-color: var(--vx-card-bg);
+  border-radius: var(--vx-radius-sm);
+  box-shadow: var(--vx-shadow-sm);
+  border: 1px solid var(--vx-border-light);
+  margin-bottom: 1.5rem;
+  overflow: visible;
+  position: relative;
+}
+
+.vuexy-card-header {
+  padding: 1.25rem 1.5rem 1rem;
+  border-bottom: 1px solid var(--vx-border-light);
+}
+
+.vuexy-card-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--vx-heading);
+  margin: 0;
+}
+
+.vuexy-card-body {
+  padding: 1.25rem 1.5rem;
+}
+
+/* ==========================================================================
+   FILTERS CARD
+   ========================================================================== */
+.vuexy-filters-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  padding-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .vuexy-filters-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vuexy-select-wrapper {
+  position: relative;
+}
+
+.vuexy-select {
+  width: 100%;
+  height: 40px;
+  padding: 0.45rem 2.2rem 0.45rem 0.95rem;
+  border: 1px solid var(--vx-border);
+  border-radius: var(--vx-radius-sm);
+  background-color: #fff;
+  color: var(--vx-heading);
+  font-family: inherit;
+  font-size: 0.9rem;
+  appearance: none;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.vuexy-select:focus {
+  border-color: var(--vx-primary);
+  box-shadow: 0 0 0 0.2rem rgba(115, 103, 240, 0.18);
+}
+
+.vuexy-select-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--vx-muted);
+  font-size: 0.75rem;
+}
+
+/* ==========================================================================
+   USERS DATATABLE CARD
+   ========================================================================== */
+.vuexy-table-controls {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.vuexy-table-controls-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vuexy-entries-select {
+  width: 72px;
+  height: 38px;
+  padding: 0 8px;
+  border: 1px solid var(--vx-border);
+  border-radius: var(--vx-radius-sm);
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--vx-heading);
+  background-color: #fff;
+  outline: none;
+  cursor: pointer;
+}
+
+.vuexy-table-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.vuexy-table-search {
+  height: 38px;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--vx-border);
+  border-radius: var(--vx-radius-sm);
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: var(--vx-heading);
+  width: 220px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.vuexy-table-search:focus {
+  border-color: var(--vx-primary);
+  box-shadow: 0 0 0 0.15rem rgba(115, 103, 240, 0.15);
+}
+
+.vuexy-btn-export {
+  height: 38px;
+  padding: 0 1rem;
+  background-color: #fff;
+  border: 1px solid var(--vx-border);
+  border-radius: var(--vx-radius-sm);
+  color: var(--vx-secondary);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.vuexy-btn-export:hover {
+  background-color: rgba(47, 43, 61, 0.04);
+  color: var(--vx-heading);
+}
+
+.vuexy-btn-add {
+  height: 38px;
+  padding: 0 1.25rem;
+  background-color: var(--vx-primary);
+  border: 1px solid var(--vx-primary);
+  border-radius: var(--vx-radius-sm);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  box-shadow: var(--vx-shadow-primary);
+  transition: all 0.15s;
+}
+
+.vuexy-btn-add:hover {
+  background-color: var(--vx-primary-hover);
+  border-color: var(--vx-primary-hover);
+}
+
+/* Table Design */
+.vuexy-table-container {
+  width: 100%;
+  overflow-x: auto;
+  min-height: 380px;
+}
+
+.vuexy-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.vuexy-table thead th {
+  padding: 0.75rem 1.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--vx-muted);
+  border-top: 1px solid var(--vx-border-light);
+  border-bottom: 1px solid var(--vx-border-light);
+  background-color: #ffffff;
+  white-space: nowrap;
+}
+
+.vuexy-table tbody tr {
+  border-bottom: 1px solid var(--vx-border-light);
+  transition: background-color 0.15s;
+}
+
+.vuexy-table tbody tr:hover {
+  background-color: rgba(47, 43, 61, 0.02);
+}
+
+.vuexy-table td {
+  padding: 0.85rem 1.25rem;
+  vertical-align: middle;
+  font-size: 0.875rem;
+  color: var(--vx-body);
+}
+
+/* Custom Checkbox */
+.vuexy-checkbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  accent-color: var(--vx-primary);
+  cursor: pointer;
+}
+
+/* User Column cell */
+.vuexy-user-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vuexy-user-avatar-sm {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.vuexy-user-info-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.vuexy-user-name {
+  font-weight: 600;
+  color: var(--vx-heading);
+  font-size: 0.9rem;
+  line-height: 1.3;
+}
+
+.vuexy-user-email {
+  font-size: 0.78rem;
+  color: var(--vx-muted);
+}
+
+/* Role Icons */
+.vuexy-role-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  font-weight: 400;
+}
+
+.vuexy-role-icon {
+  font-size: 1.05rem;
+}
+
+/* Status Badges */
+.vuexy-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--vx-radius-sm);
+  font-size: 0.78rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.vuexy-badge.active {
+  background-color: var(--vx-success-light);
+  color: var(--vx-success);
+}
+
+.vuexy-badge.pending {
+  background-color: var(--vx-warning-light);
+  color: var(--vx-warning);
+}
+
+.vuexy-badge.inactive {
+  background-color: var(--vx-secondary-light);
+  color: var(--vx-secondary);
+}
+
+.vuexy-badge.pro {
+  background-color: var(--vx-primary-light);
+  color: var(--vx-primary);
+}
+
+/* Action Icons */
+.vuexy-action-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vuexy-action-icon-btn {
+  background: transparent;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--vx-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--vx-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 1rem;
+  position: relative;
+}
+
+.vuexy-action-icon-btn:hover {
+  background-color: rgba(47, 43, 61, 0.06);
+  color: var(--vx-heading);
+}
+
+.vuexy-action-icon-btn.delete:hover {
+  background-color: var(--vx-danger-light);
+  color: var(--vx-danger);
+}
+
+/* Action Dropdown Menu */
+.vuexy-dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  background-color: #fff;
+  border-radius: var(--vx-radius-sm);
+  box-shadow: 0 4px 16px rgba(47, 43, 61, 0.18);
+  border: 1px solid var(--vx-border-light);
+  min-width: 175px;
+  z-index: 1020;
+  padding: 6px 0;
+  list-style: none;
+}
+
+.vuexy-dropdown-item {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  color: var(--vx-body);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.vuexy-dropdown-item:hover {
+  background-color: rgba(47, 43, 61, 0.04);
+  color: var(--vx-primary);
+}
+
+/* Pagination Footer */
+.vuexy-table-footer {
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--vx-border-light);
+  font-size: 0.85rem;
+  color: var(--vx-muted);
+}
+
+/* Floating "Buy Now" Demo Button */
+.vuexy-buy-now {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1090;
+}
+
+.vuexy-btn-buy-now {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1.4rem;
+  background: linear-gradient(72.47deg, #ea5455 22.16%, #ff4c51 76.47%);
+  color: #fff !important;
+  font-family: var(--vx-font-family);
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: var(--vx-radius-pill);
+  text-decoration: none;
+  box-shadow: var(--vx-shadow-danger);
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.vuexy-btn-buy-now:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(234, 84, 85, 0.6);
+}
+
+/* ==========================================================================
+   OFFCANVAS / MODAL (Slide-in Drawer)
+   ========================================================================== */
+.vuexy-offcanvas-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(47, 43, 61, 0.5);
+  z-index: 1100;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.vuexy-offcanvas {
+  width: 420px;
+  max-width: 90vw;
+  background-color: #fff;
+  height: 100vh;
+  box-shadow: -4px 0 24px rgba(47, 43, 61, 0.2);
+  display: flex;
+  flex-direction: column;
+  animation: slideInRight 0.25s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.vuexy-offcanvas-header {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--vx-border-light);
+}
+
+.vuexy-offcanvas-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--vx-heading);
+  margin: 0;
+}
+
+.vuexy-offcanvas-close {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: var(--vx-muted);
+}
+
+.vuexy-offcanvas-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Form Controls */
+.vuexy-form-group {
+  margin-bottom: 1.25rem;
+}
+
+.vuexy-form-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--vx-heading);
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.vuexy-form-input {
+  width: 100%;
+  height: 38px;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--vx-border);
+  border-radius: var(--vx-radius-sm);
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--vx-heading);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.vuexy-form-input:focus {
+  border-color: var(--vx-primary);
+  box-shadow: 0 0 0 0.15rem rgba(115, 103, 240, 0.18);
+}
+
+/* Toast */
+.vuexy-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  background-color: #fff;
+  border-radius: var(--vx-radius-sm);
+  box-shadow: 0 4px 16px rgba(47, 43, 61, 0.16);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-left: 4px solid var(--vx-primary);
+  animation: fadeIn 0.2s ease-in;
+}
+
+.vuexy-toast.success {
+  border-left-color: var(--vx-success);
+}
+
+.vuexy-toast.danger {
+  border-left-color: var(--vx-danger);
+}
+
+.vuexy-toast.warning {
+  border-left-color: var(--vx-warning);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
