@@ -71,6 +71,11 @@ class AdminController extends Controller
                 'pro_annual_price' => (float) Setting::get('pro_annual_price', 5999.00),
                 'trial_days' => (int) Setting::get('trial_days', 30),
                 'currency' => Setting::get('currency', 'INR'),
+                'razorpay_key_id' => Setting::get('razorpay_key_id') ?: env('RAZORPAY_KEY_ID', ''),
+                'razorpay_has_secret' => !empty(Setting::get('razorpay_key_secret') ?: env('RAZORPAY_KEY_SECRET', '')),
+                'razorpay_configured' => !empty(Setting::get('razorpay_key_id') ?: env('RAZORPAY_KEY_ID', ''))
+                    && !empty(Setting::get('razorpay_key_secret') ?: env('RAZORPAY_KEY_SECRET', ''))
+                    && !str_contains((string) (Setting::get('razorpay_key_id') ?: env('RAZORPAY_KEY_ID', '')), 'smartcvmaker'),
             ],
             'recent_payments' => $recentPayments,
             'recent_activities' => $recentActivities,
@@ -85,6 +90,8 @@ class AdminController extends Controller
             'pro_monthly_price' => 'required|numeric|min:1',
             'pro_annual_price' => 'nullable|numeric|min:1',
             'trial_days' => 'nullable|integer|min:1|max:365',
+            'razorpay_key_id' => 'nullable|string',
+            'razorpay_key_secret' => 'nullable|string',
         ]);
 
         $monthly = (float) $request->input('pro_monthly_price');
@@ -98,13 +105,27 @@ class AdminController extends Controller
             Setting::set('trial_days', (int) $request->input('trial_days'));
         }
 
+        if ($request->has('razorpay_key_id')) {
+            Setting::set('razorpay_key_id', trim((string) $request->input('razorpay_key_id')));
+        }
+
+        if ($request->filled('razorpay_key_secret')) {
+            Setting::set('razorpay_key_secret', trim((string) $request->input('razorpay_key_secret')));
+        }
+
+        $keyId = Setting::get('razorpay_key_id') ?: env('RAZORPAY_KEY_ID', '');
+        $hasSecret = !empty(Setting::get('razorpay_key_secret') ?: env('RAZORPAY_KEY_SECRET', ''));
+
         return response()->json([
-            'message' => "Razorpay Pro Pricing successfully updated to ₹{$monthly}/month!",
+            'message' => "Settings & Razorpay configuration successfully updated!",
             'settings' => [
                 'pro_monthly_price' => (float) Setting::get('pro_monthly_price', 799.00),
                 'pro_annual_price' => (float) Setting::get('pro_annual_price', 5999.00),
                 'trial_days' => (int) Setting::get('trial_days', 30),
                 'currency' => Setting::get('currency', 'INR'),
+                'razorpay_key_id' => $keyId,
+                'razorpay_has_secret' => $hasSecret,
+                'razorpay_configured' => !empty($keyId) && $hasSecret && !str_contains($keyId, 'smartcvmaker'),
             ],
         ]);
     }

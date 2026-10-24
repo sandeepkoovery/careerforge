@@ -61,8 +61,15 @@ export default function AdminVuexy() {
     is_admin: false,
   })
 
-  // System Settings (Pricing & Trial Days)
-  const [pricingConfig, setPricingConfig] = useState({ pro_monthly_price: 799, trial_days: 30 })
+  // System Settings (Pricing, Trial Days & Razorpay Keys)
+  const [pricingConfig, setPricingConfig] = useState({
+    pro_monthly_price: 799,
+    trial_days: 30,
+    razorpay_key_id: '',
+    razorpay_key_secret: '',
+    razorpay_has_secret: false,
+    razorpay_configured: false,
+  })
   const [savingSettings, setSavingSettings] = useState(false)
 
   // IP Geolocation Lookup tool
@@ -103,6 +110,10 @@ export default function AdminVuexy() {
         setPricingConfig({
           pro_monthly_price: res.settings.pro_monthly_price ?? 799,
           trial_days: res.settings.trial_days ?? 30,
+          razorpay_key_id: res.settings.razorpay_key_id ?? '',
+          razorpay_key_secret: '',
+          razorpay_has_secret: res.settings.razorpay_has_secret ?? false,
+          razorpay_configured: res.settings.razorpay_configured ?? false,
         })
       }
     } catch (err) {
@@ -154,11 +165,18 @@ export default function AdminVuexy() {
     e?.preventDefault()
     setSavingSettings(true)
     try {
-      const res = await api.post('/admin/settings', {
+      const payload = {
         pro_monthly_price: Number(pricingConfig.pro_monthly_price),
         trial_days: Number(pricingConfig.trial_days),
-      })
-      showToast(res.message || 'Pricing and trial rules saved successfully!')
+      }
+      if (pricingConfig.razorpay_key_id !== undefined) {
+        payload.razorpay_key_id = pricingConfig.razorpay_key_id
+      }
+      if (pricingConfig.razorpay_key_secret) {
+        payload.razorpay_key_secret = pricingConfig.razorpay_key_secret
+      }
+      const res = await api.post('/admin/settings', payload)
+      showToast(res.message || 'Pricing and Razorpay settings saved successfully!')
       loadData()
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to save settings', 'danger')
@@ -1378,8 +1396,17 @@ export default function AdminVuexy() {
           {activeTab === 'settings' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
               <div className="vuexy-card">
-                <div className="vuexy-card-header">
-                  <h5 className="vuexy-card-title">Razorpay Pro Subscription &amp; Trial Rules</h5>
+                <div className="vuexy-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h5 className="vuexy-card-title">Razorpay Gateway &amp; Pro Rules</h5>
+                  {pricingConfig.razorpay_configured ? (
+                    <span className="vuexy-badge-green" style={{ fontSize: '0.75rem', padding: '3px 8px' }}>
+                      🟢 Razorpay Active (Live/Test)
+                    </span>
+                  ) : (
+                    <span className="vuexy-badge-orange" style={{ fontSize: '0.75rem', padding: '3px 8px' }}>
+                      🟡 Sandbox Simulator Active
+                    </span>
+                  )}
                 </div>
                 <div className="vuexy-card-body">
                   <form onSubmit={handleSaveSettings}>
@@ -1436,8 +1463,42 @@ export default function AdminVuexy() {
                       </div>
                     </div>
 
+                    {/* Razorpay Key ID */}
+                    <div className="vuexy-form-group" style={{ borderTop: '1px dashed #e2e8f0', paddingTop: '16px', marginTop: '16px' }}>
+                      <label className="vuexy-form-label">Razorpay Key ID</label>
+                      <input
+                        type="text"
+                        placeholder="rzp_test_... or rzp_live_..."
+                        value={pricingConfig.razorpay_key_id}
+                        onChange={(e) => setPricingConfig({ ...pricingConfig, razorpay_key_id: e.target.value })}
+                        className="vuexy-form-input"
+                        style={{ fontFamily: 'monospace', fontSize: '0.86rem' }}
+                      />
+                      <div style={{ fontSize: '0.78rem', color: '#8b8893', marginTop: '5px' }}>
+                        Obtained from Razorpay Dashboard → Settings → API Keys.
+                      </div>
+                    </div>
+
+                    {/* Razorpay Key Secret */}
+                    <div className="vuexy-form-group">
+                      <label className="vuexy-form-label">
+                        Razorpay Key Secret {pricingConfig.razorpay_has_secret && <span style={{ color: '#28c76f', fontSize: '0.78rem' }}>(✓ Secret Saved)</span>}
+                      </label>
+                      <input
+                        type="password"
+                        placeholder={pricingConfig.razorpay_has_secret ? '•••••••••••••••• (Leave blank to keep existing)' : 'Enter Razorpay Key Secret'}
+                        value={pricingConfig.razorpay_key_secret}
+                        onChange={(e) => setPricingConfig({ ...pricingConfig, razorpay_key_secret: e.target.value })}
+                        className="vuexy-form-input"
+                        style={{ fontFamily: 'monospace', fontSize: '0.86rem' }}
+                      />
+                      <div style={{ fontSize: '0.78rem', color: '#8b8893', marginTop: '5px' }}>
+                        Used securely on the server to create orders and verify payment HMAC signatures.
+                      </div>
+                    </div>
+
                     <button type="submit" disabled={savingSettings} className="vuexy-btn-add">
-                      {savingSettings ? 'Saving Changes…' : '💾 Save Pricing & Rules'}
+                      {savingSettings ? 'Saving Changes…' : '💾 Save Settings & Razorpay Keys'}
                     </button>
                   </form>
                 </div>

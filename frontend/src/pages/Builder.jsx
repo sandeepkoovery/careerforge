@@ -617,6 +617,8 @@ export default function Builder() {
         open={templateModalOpen}
         onClose={() => setTemplateModalOpen(false)}
         currentTemplate={resume.template}
+        resumeData={resume.data}
+        accent={resume.accent}
         isPro={!!user?.is_pro}
         onSelect={(tplId) => mutate((r) => { r.template = tplId })}
         onUpgradeReq={(tplName) => {
@@ -642,7 +644,7 @@ export default function Builder() {
   )
 }
 
-function TemplatePickerModal({ open, onClose, currentTemplate, onSelect, isPro, onUpgradeReq }) {
+function TemplatePickerModal({ open, onClose, currentTemplate, resumeData, accent, onSelect, isPro, onUpgradeReq }) {
   const [tab, setTab] = useState('all')
   const [query, setQuery] = useState('')
 
@@ -661,15 +663,28 @@ function TemplatePickerModal({ open, onClose, currentTemplate, onSelect, isPro, 
     return true
   })
 
+  // Prepare balanced preview data: use candidate's actual text if available, fallback to SAMPLE for empty sections
+  const previewData = {
+    basics: {
+      ...SAMPLE.basics,
+      ...(resumeData?.basics?.name ? resumeData.basics : {}),
+    },
+    experience: resumeData?.experience?.length ? resumeData.experience : SAMPLE.experience,
+    education: resumeData?.education?.length ? resumeData.education : SAMPLE.education,
+    skills: resumeData?.skills?.length ? resumeData.skills : SAMPLE.skills,
+    projects: resumeData?.projects?.length ? resumeData.projects : SAMPLE.projects,
+    certifications: resumeData?.certifications?.length ? resumeData.certifications : SAMPLE.certifications,
+  }
+
   return (
     <div className="modal-backdrop fade-in" onClick={onClose}>
-      <div className="card modal-card" style={{ width: 'min(1050px, 96vw)', maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+      <div className="card modal-card" style={{ width: 'min(1100px, 96vw)', maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
         <button className="btn btn-icon btn-ghost modal-close" onClick={onClose} aria-label="Close modal"><X size={18} /></button>
         <div style={{ marginBottom: 20 }}>
           <div className="row between" style={{ flexWrap: 'wrap', gap: 12 }}>
             <div>
               <h2 style={{ fontSize: '1.6rem', marginBottom: 4 }}>Select a Resume Template</h2>
-              <p className="muted small">Choose from {TEMPLATES.length} professional ATS-optimized templates ({freeCount} Free, {proCount} Pro).</p>
+              <p className="muted small">Choose from {TEMPLATES.length} professional ATS-optimized templates ({freeCount} Free, {proCount} Pro) with live previews.</p>
             </div>
             <input
               type="text"
@@ -691,24 +706,153 @@ function TemplatePickerModal({ open, onClose, currentTemplate, onSelect, isPro, 
             const isCurrent = currentTemplate === t.id
             const locked = t.pro && !isPro
             return (
-              <div key={t.id} className="card" style={{ padding: 16, border: isCurrent ? '2px solid var(--brand)' : '1px solid var(--border)', background: isCurrent ? 'rgba(99,102,241,0.04)' : '#fff' }}>
-                <div className="row between" style={{ marginBottom: 6 }}>
-                  <strong style={{ fontSize: '1.05rem' }}>{t.name}</strong>
-                  <span className={`badge ${t.pro ? 'badge-pro' : 'badge-free'}`} style={{ fontSize: '0.72rem', padding: '2px 7px' }}>{t.pro ? '👑 PRO' : 'FREE'}</span>
+              <div
+                key={t.id}
+                className="card card-hover tpl-card"
+                style={{
+                  padding: 0,
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  border: isCurrent ? '2px solid #6366f1' : '1px solid var(--border)',
+                  background: isCurrent ? 'rgba(99,102,241,0.03)' : '#fff',
+                  borderRadius: 12,
+                  boxShadow: isCurrent ? '0 0 0 2px rgba(99,102,241,0.2)' : undefined,
+                  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                }}
+              >
+                {/* Visual Resume Template Preview */}
+                <div
+                  className="thumb"
+                  style={{
+                    height: 230,
+                    background: '#f8fafc',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'flex-start',
+                    padding: '14px 14px 0',
+                    overflow: 'hidden',
+                    position: 'relative',
+                    cursor: 'pointer',
+                    borderBottom: '1px solid #e2e8f0',
+                  }}
+                  onClick={() => {
+                    if (isCurrent) return
+                    if (locked) {
+                      onClose()
+                      onUpgradeReq(t.name)
+                    } else {
+                      onSelect(t.id)
+                      onClose()
+                    }
+                  }}
+                >
+                  {/* Badge in top right corner */}
+                  {t.pro ? (
+                    <span className="badge-pro tpl-tag-badge" style={{ position: 'absolute', top: 10, right: 10, zIndex: 5, fontSize: '0.72rem', padding: '3px 8px' }}>
+                      👑 PRO
+                    </span>
+                  ) : (
+                    <span className="badge-free tpl-tag-badge" style={{ position: 'absolute', top: 10, right: 10, zIndex: 5, fontSize: '0.72rem', padding: '3px 8px' }}>
+                      FREE
+                    </span>
+                  )}
+
+                  {isCurrent && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: 10,
+                        left: 10,
+                        zIndex: 5,
+                        background: '#6366f1',
+                        color: '#fff',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        padding: '3px 8px',
+                        borderRadius: 4,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        boxShadow: '0 2px 6px rgba(99,102,241,0.3)',
+                      }}
+                    >
+                      <Check size={12} /> Active
+                    </span>
+                  )}
+
+                  <div className="thumb-inner" style={{ pointerEvents: 'none', userSelect: 'none', borderRadius: 4, overflow: 'hidden' }}>
+                    <ScaledPaper width={230}>
+                      <ResumePaper data={previewData} template={t.id} accent={accent || '#6366f1'} />
+                    </ScaledPaper>
+                  </div>
+
+                  {/* Lock overlay if Pro template and user is not Pro */}
+                  {locked && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'rgba(15, 23, 42, 0.28)',
+                        backdropFilter: 'blur(2px)',
+                        display: 'grid',
+                        placeItems: 'center',
+                        zIndex: 4,
+                      }}
+                    >
+                      <span
+                        className="badge-pro"
+                        style={{
+                          fontSize: '0.82rem',
+                          padding: '6px 14px',
+                          boxShadow: '0 8px 16px rgba(0,0,0,0.2)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          background: 'linear-gradient(135deg, #7c3aed 0%, #d946ef 100%)',
+                          color: '#fff',
+                          border: 'none',
+                        }}
+                      >
+                        <Lock size={14} /> Unlock with Pro
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <div className="chip" style={{ fontSize: '0.75rem', marginBottom: 8, display: 'inline-block' }}>{t.tag}</div>
-                <p className="muted small" style={{ fontSize: '0.84rem', minHeight: 38, marginBottom: 12 }}>{t.desc}</p>
-                {isCurrent ? (
-                  <button className="btn btn-sm" disabled style={{ width: '100%', opacity: 0.8 }}><Check size={14} /> Active Template</button>
-                ) : locked ? (
-                  <button className="btn btn-sm btn-primary" style={{ width: '100%', background: 'linear-gradient(135deg, #7c3aed 0%, #d946ef 100%)' }} onClick={() => { onClose(); onUpgradeReq(t.name) }}>
-                    <Lock size={13} /> Unlock with Pro
-                  </button>
-                ) : (
-                  <button className="btn btn-sm btn-outline" style={{ width: '100%' }} onClick={() => { onSelect(t.id); onClose() }}>
-                    Use Template
-                  </button>
-                )}
+
+                {/* Card Meta & Actions */}
+                <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <div className="row between" style={{ marginBottom: 4 }}>
+                    <strong style={{ fontSize: '1.02rem', color: '#0f172a' }}>{t.name}</strong>
+                    <span className="chip" style={{ fontSize: '0.74rem' }}>{t.tag}</span>
+                  </div>
+                  <p className="muted small" style={{ fontSize: '0.82rem', minHeight: 36, marginBottom: 12, lineHeight: 1.4 }}>
+                    {t.desc}
+                  </p>
+                  <div style={{ marginTop: 'auto' }}>
+                    {isCurrent ? (
+                      <button className="btn btn-sm" disabled style={{ width: '100%', opacity: 0.85, background: '#f1f5f9', color: '#64748b' }}>
+                        <Check size={14} /> Current Template
+                      </button>
+                    ) : locked ? (
+                      <button
+                        className="btn btn-sm btn-primary"
+                        style={{ width: '100%', background: 'linear-gradient(135deg, #7c3aed 0%, #d946ef 100%)', gap: 6 }}
+                        onClick={() => { onClose(); onUpgradeReq(t.name) }}
+                      >
+                        <Lock size={13} /> Unlock with Pro
+                      </button>
+                    ) : (
+                      <button
+                        className="btn btn-sm btn-outline"
+                        style={{ width: '100%' }}
+                        onClick={() => { onSelect(t.id); onClose() }}
+                      >
+                        Use Template
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             )
           })}
