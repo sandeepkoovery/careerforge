@@ -29,7 +29,7 @@ export default function UpgradeModal({ open, onClose, templateName }) {
           if (r.pro_monthly_price) setProPrice(r.pro_monthly_price)
           setIsConfigured(Boolean(r.razorpay_configured))
         })
-        .catch(() => {})
+        .catch(() => { })
     }
   }, [open])
 
@@ -88,6 +88,23 @@ export default function UpgradeModal({ open, onClose, templateName }) {
         description: '1-Month Unlimited Pro Access & All 35 Templates',
         image: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
         order_id: orderData.order_id,
+        "config": {
+          "display": {
+            "blocks": {
+              "custom_block": {
+                "name": "Pay Using",
+                "instruments": [
+                  { "method": "upi" },
+                  { "method": "card" }
+                ]
+              }
+            },
+            "sequence": ["block.custom_block"],
+            "preferences": {
+              "show_default_blocks": false // Hides all other standard methods
+            }
+          }
+        },
         prefill: {
           name: user.name,
           email: user.email,
