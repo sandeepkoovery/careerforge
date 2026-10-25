@@ -47,6 +47,12 @@ export function AuthProvider({ children }) {
     return r
   }, [])
 
+  const updateProfile = useCallback(async (data) => {
+    const r = await api.put('/user/profile', data)
+    setUser(r.user)
+    return r
+  }, [])
+
   const refreshUser = useCallback(async () => {
     try {
       const r = await api.get('/auth/me')
@@ -58,7 +64,7 @@ export function AuthProvider({ children }) {
   }, [])
 
   return (
-    <AuthCtx.Provider value={{ user, setUser, loading, login, adminLogin, register, logout, upgrade, refreshUser }}>
+    <AuthCtx.Provider value={{ user, setUser, loading, login, adminLogin, register, logout, upgrade, updateProfile, refreshUser }}>
       {children}
     </AuthCtx.Provider>
   )

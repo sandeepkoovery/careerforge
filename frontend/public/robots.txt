@@ -1,0 +1,29 @@
+# Smartcvmaker Robots.txt
+# Allow search engines to index public pages, favicons, and manifest
+
+User-agent: *
+Allow: /
+Allow: /favicon.ico
+Allow: /favicon.svg
+Allow: /favicon-*.png
+Allow: /apple-touch-icon.png
+Allow: /icon-*.png
+Allow: /og-image.png
+Allow: /site.webmanifest
+Allow: /sitemap.xml
+
+# Disallow internal dashboards, admin, and backend API routes
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /api/*
+Disallow: /auth/callback
+
+# Explicit Googlebot-Image rules for favicon and search snippet icons
+User-agent: Googlebot-Image
+Allow: /favicon*
+Allow: /icon*
+Allow: /apple-touch-icon.png
+Allow: /og-image.png
+
+# XML Sitemap location for Google Search Console
+Sitemap: https://smartcvmaker.com/sitemap.xml

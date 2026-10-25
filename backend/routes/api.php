@@ -36,6 +36,7 @@ Route::prefix('ai')->middleware('throttle:40,1')->group(function () {
 });
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::put('user/profile', [AuthController::class, 'updateProfile']);
     Route::post('user/upgrade', [AuthController::class, 'upgrade']);
 
     // Razorpay Payments

@@ -13,7 +13,7 @@ class Llm
 {
     public function enabled(): bool
     {
-        return filled(config('careerforge.llm.key'));
+        return filled(config('smartcvmaker.llm.key') ?: config('careerforge.llm.key'));
     }
 
     public function complete(string $system, string $user, float $temperature = 0.7): ?string
@@ -21,7 +21,7 @@ class Llm
         if (! $this->enabled()) {
             return null;
         }
-        $cfg = config('careerforge.llm');
+        $cfg = config('smartcvmaker.llm') ?: config('careerforge.llm');
 
         try {
             $res = Http::withToken($cfg['key'])->timeout($cfg['timeout'])

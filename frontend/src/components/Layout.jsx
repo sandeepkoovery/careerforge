@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { Sparkles, Menu, X, LogOut, Crown, Shield, Clock, AlertTriangle } from 'lucide-react'
+import { Sparkles, Menu, X, LogOut, Crown, Shield, Clock, AlertTriangle, User } from 'lucide-react'
 import { useAuth } from '../auth'
 import UpgradeModal from './UpgradeModal'
 
@@ -78,6 +78,9 @@ export function Navbar() {
                 )}
 
                 <Link to="/dashboard" className="btn btn-sm">Dashboard</Link>
+                <Link to="/profile" id="nav-profile-link" className="btn btn-sm btn-ghost row" style={{ gap: 5 }} title="My Profile & Settings">
+                  <User size={15} /> Profile
+                </Link>
                 <button className="btn btn-sm btn-ghost" onClick={async () => { await logout(); nav('/') }} title="Log out"><LogOut size={16} /></button>
               </>
             ) : (

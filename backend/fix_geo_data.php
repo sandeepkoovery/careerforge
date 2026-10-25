@@ -24,7 +24,7 @@ $deleted = LoginActivity::where('ip_address', '103.111.160.10')->delete();
 echo "Deleted {$deleted} erroneous Pakistan IP entries." . PHP_EOL;
 
 // 2. Update Admin user to real IP and location
-$admin = User::where('email', 'admin@careerforge.com')->first();
+$admin = User::where('email', 'admin@smartcvmaker.com')->first();
 if ($admin) {
     $admin->last_login_ip = $realIp;
     $admin->last_login_city = $realGeo['city'] ?? 'Kannur';
@@ -34,7 +34,7 @@ if ($admin) {
     $admin->last_device = 'Chrome on Windows 11';
     $admin->last_login_at = now();
     $admin->save();
-    echo "Updated admin@careerforge.com with real IP: {$realIp} ({$admin->last_login_city}, {$admin->last_login_country})" . PHP_EOL;
+    echo "Updated admin@smartcvmaker.com with real IP: {$realIp} ({$admin->last_login_city}, {$admin->last_login_country})" . PHP_EOL;
 }
 
 // 3. Update test user if exists
@@ -73,7 +73,7 @@ foreach ($otherUsers as $email => $data) {
 // 5. Insert fresh, accurate LoginActivity records with real IP
 LoginActivity::create([
     'user_id' => $admin?->id,
-    'user_email' => 'admin@careerforge.com',
+    'user_email' => 'admin@smartcvmaker.com',
     'ip_address' => $realIp,
     'city' => $realGeo['city'] ?? 'Kannur',
     'region' => $realGeo['region'] ?? 'Kerala',

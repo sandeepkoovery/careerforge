@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Plus, Upload, Copy, Trash2, Pencil, ScanSearch, Mail, Target, UserRoundSearch, Loader2, FileText, Crown, Clock, AlertTriangle } from 'lucide-react'
+import { Plus, Upload, Copy, Trash2, Pencil, ScanSearch, Mail, Target, UserRoundSearch, Loader2, FileText, Crown, Clock, AlertTriangle, User } from 'lucide-react'
 import { api } from '../api'
 import { useAuth } from '../auth'
 import { ResumePaper, ScaledPaper } from '../components/ResumeTemplates'
@@ -93,6 +93,9 @@ export default function Dashboard() {
             <p className="muted">Build, score and tailor your resumes from one place.</p>
           </div>
           <span className="spacer" />
+          <Link to="/profile" className="btn btn-ghost" style={{ gap: 6 }}>
+            <User size={16} /> Edit Profile
+          </Link>
           <input ref={fileRef} type="file" hidden accept=".pdf,.docx,.txt" onChange={(e) => importFile(e.target.files[0])} />
           <button className="btn" onClick={() => fileRef.current.click()} disabled={!!busy}>{busy === 'import' ? <Loader2 size={16} className="spin" /> : <Upload size={16} />} Import resume</button>
           <button id="new-resume" className="btn btn-primary" onClick={create} disabled={!!busy}>{busy === 'new' ? <Loader2 size={16} className="spin" /> : <Plus size={16} />} New resume</button>
