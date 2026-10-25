@@ -28,7 +28,7 @@ class PaymentController extends Controller
 
     public function getPricing()
     {
-        $monthlyPrice = (float) Setting::get('pro_monthly_price', 799.00);
+        $monthlyPrice = (float) Setting::get('pro_monthly_price', 299.00);
         $annualPrice = (float) Setting::get('pro_annual_price', 5999.00);
         $trialDays = (int) Setting::get('trial_days', 30);
         [$keyId, , $isConfigured] = $this->getRazorpayCredentials();
@@ -49,7 +49,7 @@ class PaymentController extends Controller
         $user = $request->user();
         $plan = $request->input('plan', 'pro_monthly');
 
-        $monthlyPrice = (float) Setting::get('pro_monthly_price', 799.00);
+        $monthlyPrice = (float) Setting::get('pro_monthly_price', 299.00);
         $annualPrice = (float) Setting::get('pro_annual_price', 5999.00);
 
         $plans = [
@@ -155,7 +155,7 @@ class PaymentController extends Controller
         ]);
 
         $user = $request->user();
-        $defaultPrice = (float) Setting::get('pro_monthly_price', 799.00);
+        $defaultPrice = (float) Setting::get('pro_monthly_price', 299.00);
         $amount = (float) $request->input('amount', $defaultPrice);
         $plan = $request->input('plan', 'pro_monthly');
         $paymentId = (string) $request->input('razorpay_payment_id');

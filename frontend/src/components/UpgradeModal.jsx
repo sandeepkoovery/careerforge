@@ -8,7 +8,7 @@ export default function UpgradeModal({ open, onClose, templateName }) {
   const [busy, setBusy] = useState(false)
   const [success, setSuccess] = useState('')
   const [err, setErr] = useState('')
-  const [proPrice, setProPrice] = useState(799)
+  const [proPrice, setProPrice] = useState(299)
 
   const [isConfigured, setIsConfigured] = useState(false)
   const [simulationOrder, setSimulationOrder] = useState(null)

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Plus, Upload, Copy, Trash2, Pencil, ScanSearch, Mail, Target, UserRoundSearch, Loader2, FileText, Crown, Clock, AlertTriangle, User } from 'lucide-react'
+import { Plus, Upload, Copy, Trash2, Pencil, ScanSearch, Mail, Target, UserRoundSearch, Loader2, FileText, Crown, Clock, AlertTriangle, User, LifeBuoy } from 'lucide-react'
 import { api } from '../api'
 import { useAuth } from '../auth'
 import { ResumePaper, ScaledPaper } from '../components/ResumeTemplates'
@@ -47,11 +47,13 @@ export default function Dashboard() {
   const del = async (id) => { if (confirm('Delete this resume permanently?')) { await api.del(`/resumes/${id}`); load() } }
   const delHist = async (id) => { await api.del(`/history/${id}`); setHistory(history.filter((h) => h.id !== id)) }
 
+  const isPro = Boolean(user?.is_pro && user.is_pro !== '0' && user.is_pro !== 0)
+
   return (
     <main className="page">
       <div className="container">
         {/* 1-Month Trial Active Banner */}
-        {user?.is_trial && (
+        {!isPro && user?.is_trial && (
           <div className="alert alert-info row between" style={{ marginBottom: 24, background: '#f0f9ff', color: '#0369a1', border: '1px solid #bae6fd', padding: '12px 18px', flexWrap: 'wrap', gap: 10 }}>
             <div className="row" style={{ gap: 10 }}>
               <Clock size={20} color="#0284c7" />
@@ -67,7 +69,7 @@ export default function Dashboard() {
         )}
 
         {/* 1-Month Trial Expired Banner */}
-        {user?.is_trial_expired && (
+        {!isPro && user?.is_trial_expired && (
           <div className="alert alert-error row between" style={{ marginBottom: 24, background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca', padding: '14px 18px', flexWrap: 'wrap', gap: 12 }}>
             <div className="row" style={{ gap: 10 }}>
               <AlertTriangle size={22} color="#dc2626" />
@@ -93,6 +95,9 @@ export default function Dashboard() {
             <p className="muted">Build, score and tailor your resumes from one place.</p>
           </div>
           <span className="spacer" />
+          <Link to="/support" className="btn btn-ghost" style={{ gap: 6 }} title="Contact Support & Helpdesk">
+            <LifeBuoy size={16} /> Help &amp; Support
+          </Link>
           <Link to="/profile" className="btn btn-ghost" style={{ gap: 6 }}>
             <User size={16} /> Edit Profile
           </Link>

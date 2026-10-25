@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import {
   User, Mail, Lock, Shield, Crown, Clock, Check, AlertTriangle,
   KeyRound, Globe, Smartphone, Save, ArrowLeft, LogOut, Loader2,
-  Calendar, CheckCircle2, Sparkles
+  Calendar, CheckCircle2, Sparkles, LifeBuoy, MessageSquare
 } from 'lucide-react'
 import { useAuth } from '../auth'
 import UpgradeModal from '../components/UpgradeModal'
@@ -162,7 +162,16 @@ export default function Profile() {
             </div>
 
             {/* Header Right Action */}
-            <div className="row" style={{ gap: 10 }}>
+            <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
+              <Link
+                to="/support"
+                id="profile-header-support-btn"
+                className="btn btn-sm btn-ghost row"
+                style={{ gap: 6, border: '1px solid var(--border)' }}
+                title="Open Support & Helpdesk"
+              >
+                <LifeBuoy size={15} /> Help &amp; Support
+              </Link>
               {!user?.is_pro && (
                 <button
                   id="profile-upgrade-btn"
@@ -186,7 +195,7 @@ export default function Profile() {
         </div>
 
         {/* Tab Navigation */}
-        <div style={{ marginBottom: 24, display: 'flex', gap: 8, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
+        <div style={{ marginBottom: 24, display: 'flex', gap: 8, borderBottom: '1px solid var(--border)', paddingBottom: 12, flexWrap: 'wrap' }}>
           <button
             id="tab-profile-general"
             className={`tab ${activeTab === 'general' ? 'active' : ''}`}
@@ -210,6 +219,14 @@ export default function Profile() {
             style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
           >
             <Crown size={16} /> Subscription & Plan
+          </button>
+          <button
+            id="tab-profile-support"
+            className={`tab ${activeTab === 'support' ? 'active' : ''}`}
+            onClick={() => setActiveTab('support')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
+          >
+            <LifeBuoy size={16} /> Help &amp; Support
           </button>
         </div>
 
@@ -477,6 +494,113 @@ export default function Profile() {
                 </button>
               </div>
             )}
+          </div>
+        )}
+
+        {/* TAB 4: HELP & SUPPORT */}
+        {activeTab === 'support' && (
+          <div className="card" style={{ padding: '32px 36px' }}>
+            <div className="row wrap between" style={{ marginBottom: 24, gap: 16 }}>
+              <div>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 800 }}>Customer Support &amp; Helpdesk</h2>
+                <p className="muted small">Submit tickets, report template issues, or get direct assistance with your account.</p>
+              </div>
+              <div className="row" style={{ gap: 10 }}>
+                <Link
+                  to="/support"
+                  id="profile-open-support-desk-btn"
+                  className="btn btn-primary btn-sm row"
+                  style={{ gap: 8 }}
+                >
+                  <LifeBuoy size={15} /> Open Support Desk &rarr;
+                </Link>
+              </div>
+            </div>
+
+            {/* Support Overview Grid */}
+            <div className="grid grid-3" style={{ marginBottom: 32, gap: 18 }}>
+              <div style={{ padding: 20, background: '#f8fafc', borderRadius: 14, border: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: '#ede9fe', color: '#7c3aed', display: 'grid', placeItems: 'center' }}>
+                    <MessageSquare size={18} />
+                  </div>
+                  <div style={{ fontWeight: 700, fontSize: '1.05rem' }}>Support Tickets</div>
+                </div>
+                <p className="muted small" style={{ marginBottom: 14, lineHeight: 1.5 }}>
+                  Create official tickets to track technical bugs, template design requests, or billing queries with live admin replies.
+                </p>
+                <Link to="/support" className="btn btn-sm btn-outline row" style={{ gap: 6, width: '100%', justifyContent: 'center' }}>
+                  <MessageSquare size={14} /> View Your Tickets
+                </Link>
+              </div>
+
+              <div style={{ padding: 20, background: '#f8fafc', borderRadius: 14, border: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: '#e0f2fe', color: '#0284c7', display: 'grid', placeItems: 'center' }}>
+                    <Crown size={18} />
+                  </div>
+                  <div style={{ fontWeight: 700, fontSize: '1.05rem' }}>
+                    {user?.is_pro ? 'Priority SLA Active' : 'Pro Fast-Track'}
+                  </div>
+                </div>
+                <p className="muted small" style={{ marginBottom: 14, lineHeight: 1.5 }}>
+                  {user?.is_pro
+                    ? 'As a Pro member, your support tickets are routed directly to our priority queue with fast turnaround.'
+                    : 'Upgrade to Pro to receive fast priority turnaround times and dedicated specialist review.'}
+                </p>
+                {user?.is_pro ? (
+                  <div className="chip" style={{ background: '#ede9fe', color: '#7c3aed', borderColor: '#ddd6fe', fontWeight: 600, justifyContent: 'center' }}>
+                    ⚡ Priority Support Enabled
+                  </div>
+                ) : (
+                  <button className="btn btn-sm btn-primary row" style={{ gap: 6, width: '100%', justifyContent: 'center' }} onClick={() => setUpgradeOpen(true)}>
+                    <Crown size={14} /> Upgrade for Priority SLA
+                  </button>
+                )}
+              </div>
+
+              <div style={{ padding: 20, background: '#f8fafc', borderRadius: 14, border: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: '#ecfdf5', color: '#059669', display: 'grid', placeItems: 'center' }}>
+                    <Mail size={18} />
+                  </div>
+                  <div style={{ fontWeight: 700, fontSize: '1.05rem' }}>Direct Email</div>
+                </div>
+                <p className="muted small" style={{ marginBottom: 14, lineHeight: 1.5 }}>
+                  Need urgent corporate assistance or partner inquiries? Contact our team anytime via email.
+                </p>
+                <a href="mailto:support@smartcvmaker.com" className="btn btn-sm btn-ghost row" style={{ gap: 6, width: '100%', justifyContent: 'center', border: '1px solid var(--border)' }}>
+                  support@smartcvmaker.com
+                </a>
+              </div>
+            </div>
+
+            {/* Common FAQs Section */}
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: 24 }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: 16 }}>Frequently Asked Questions</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ padding: '14px 18px', background: '#ffffff', borderRadius: 10, border: '1px solid var(--border)' }}>
+                  <strong style={{ fontSize: '0.94rem', display: 'block', marginBottom: 4 }}>How does ATS keyword scoring work?</strong>
+                  <div className="muted small" style={{ lineHeight: 1.5 }}>
+                    Our ATS checker compares your resume against target job descriptions and extracts required hard skills, formatting syntax, and structural standards used by leading systems like Workday, Greenhouse, and Taleo.
+                  </div>
+                </div>
+
+                <div style={{ padding: '14px 18px', background: '#ffffff', borderRadius: 10, border: '1px solid var(--border)' }}>
+                  <strong style={{ fontSize: '0.94rem', display: 'block', marginBottom: 4 }}>Can I export in PDF with high vector quality?</strong>
+                  <div className="muted small" style={{ lineHeight: 1.5 }}>
+                    Yes! Both free and Pro members can generate print-ready vector PDFs directly from the builder.
+                  </div>
+                </div>
+
+                <div style={{ padding: '14px 18px', background: '#ffffff', borderRadius: 10, border: '1px solid var(--border)' }}>
+                  <strong style={{ fontSize: '0.94rem', display: 'block', marginBottom: 4 }}>How do I track my active support tickets?</strong>
+                  <div className="muted small" style={{ lineHeight: 1.5 }}>
+                    Click on "Open Support Desk" above or navigate to the Support menu from the top navigation to view status updates and chat directly with support administrators.
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

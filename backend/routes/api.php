@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ResumeController;
+use App\Http\Controllers\SupportController;
 use App\Http\Controllers\ToolsController;
 use Illuminate\Support\Facades\Route;
 
@@ -53,7 +54,21 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('users/{id}', [AdminController::class, 'destroy']);
         Route::post('ip-lookup', [AdminController::class, 'lookupIp']);
         Route::post('settings', [AdminController::class, 'updateSettings']);
+
+        // Support Tickets (Admin)
+        Route::get('support/tickets', [SupportController::class, 'adminIndex']);
+        Route::get('support/tickets/{id}', [SupportController::class, 'adminShow']);
+        Route::post('support/tickets/{id}/reply', [SupportController::class, 'adminReply']);
+        Route::patch('support/tickets/{id}/status', [SupportController::class, 'adminUpdateStatus']);
+        Route::delete('support/tickets/{id}', [SupportController::class, 'adminDelete']);
     });
+
+    // Support Tickets (User)
+    Route::get('support/tickets', [SupportController::class, 'index']);
+    Route::post('support/tickets', [SupportController::class, 'store']);
+    Route::get('support/tickets/{id}', [SupportController::class, 'show']);
+    Route::post('support/tickets/{id}/reply', [SupportController::class, 'reply']);
+    Route::post('support/tickets/{id}/close', [SupportController::class, 'close']);
 
     Route::post('resumes/import', [ResumeController::class, 'import']);
     Route::post('resumes/{id}/duplicate', [ResumeController::class, 'duplicate']);

@@ -25,6 +25,9 @@ export function Navbar() {
     ['/tools/job-match', 'Job Match'],
     ['/tools/linkedin', 'LinkedIn'],
   ]
+  const isPro = Boolean(user?.is_pro && user.is_pro !== '0' && user.is_pro !== 0)
+  const isAdmin = Boolean(user?.is_admin && user.is_admin !== '0' && user.is_admin !== 0)
+
   return (
     <>
       <header className={`nav ${open ? 'open' : ''}`}>
@@ -37,7 +40,7 @@ export function Navbar() {
           <div className="row nav-actions" onClick={() => setOpen(false)}>
             {user ? (
               <>
-                {user.is_admin && (
+                {isAdmin && (
                   <Link
                     to="/admin"
                     id="nav-admin-link"
@@ -49,7 +52,7 @@ export function Navbar() {
                   </Link>
                 )}
 
-                {user.is_pro ? (
+                {isPro ? (
                   <span className="badge-pro" title="Smartcvmaker Pro Member">
                     <Crown size={13} /> PRO
                   </span>
@@ -109,8 +112,8 @@ export function Footer() {
         <span className="spacer" />
         <div className="row" style={{ gap: '1.25rem', alignItems: 'center' }}>
           <span>© {new Date().getFullYear()} Smartcvmaker. Craft resumes that get read.</span>
-          <Link to="/admin/login" style={{ color: 'var(--muted)', fontSize: '0.82rem', textDecoration: 'none' }} title="Administrator Portal Login">
-            🛡️ Admin Login
+          <Link to="/support" style={{ color: 'var(--muted)', fontSize: '0.82rem', textDecoration: 'none' }} title="Contact Customer Support">
+            🎧 Help &amp; Support
           </Link>
         </div>
       </div>

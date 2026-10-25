@@ -63,7 +63,7 @@ export default function AdminVuexy() {
 
   // System Settings (Pricing, Trial Days & Razorpay Keys)
   const [pricingConfig, setPricingConfig] = useState({
-    pro_monthly_price: 799,
+    pro_monthly_price: 299,
     trial_days: 30,
     razorpay_key_id: '',
     razorpay_key_secret: '',
@@ -76,6 +76,28 @@ export default function AdminVuexy() {
   const [lookupIpInput, setLookupIpInput] = useState('')
   const [lookupResult, setLookupResult] = useState(null)
   const [lookupLoading, setLookupLoading] = useState(false)
+
+  // Support Tickets Admin State
+  const [tickets, setTickets] = useState([])
+  const [ticketCounts, setTicketCounts] = useState({
+    total: 0,
+    open: 0,
+    in_progress: 0,
+    answered: 0,
+    waiting_user: 0,
+    resolved: 0,
+    closed: 0,
+  })
+  const [ticketsLoading, setTicketsLoading] = useState(false)
+  const [ticketStatusFilter, setTicketStatusFilter] = useState('all')
+  const [ticketPriorityFilter, setTicketPriorityFilter] = useState('all')
+  const [ticketSearchQuery, setTicketSearchQuery] = useState('')
+  const [selectedAdminTicket, setSelectedAdminTicket] = useState(null)
+  const [adminTicketModalOpen, setAdminTicketModalOpen] = useState(false)
+  const [adminReplyText, setAdminReplyText] = useState('')
+  const [adminReplyStatus, setAdminReplyStatus] = useState('answered')
+  const [adminReplySending, setAdminReplySending] = useState(false)
+  const [adminTicketDetailLoading, setAdminTicketDetailLoading] = useState(false)
 
   // Real-time clock
   const [clock, setClock] = useState(new Date().toLocaleTimeString())
@@ -108,7 +130,7 @@ export default function AdminVuexy() {
       }
       if (res.settings) {
         setPricingConfig({
-          pro_monthly_price: res.settings.pro_monthly_price ?? 799,
+          pro_monthly_price: res.settings.pro_monthly_price ?? 299,
           trial_days: res.settings.trial_days ?? 30,
           razorpay_key_id: res.settings.razorpay_key_id ?? '',
           razorpay_key_secret: '',
@@ -116,6 +138,7 @@ export default function AdminVuexy() {
           razorpay_configured: res.settings.razorpay_configured ?? false,
         })
       }
+      loadAdminTickets(true)
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to load platform data', 'danger')
     } finally {
@@ -126,6 +149,12 @@ export default function AdminVuexy() {
   useEffect(() => {
     loadData()
   }, [])
+
+  useEffect(() => {
+    if (activeTab === 'tickets') {
+      loadAdminTickets(false)
+    }
+  }, [activeTab, ticketStatusFilter, ticketPriorityFilter])
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type })
@@ -212,6 +241,101 @@ export default function AdminVuexy() {
       is_admin: false,
     })
     loadData()
+  }
+
+  // Support Tickets Handler Methods
+  const loadAdminTickets = async (quiet = false) => {
+    try {
+      if (!quiet) setTicketsLoading(true)
+      const params = new URLSearchParams()
+      if (ticketStatusFilter !== 'all') params.append('status', ticketStatusFilter)
+      if (ticketPriorityFilter !== 'all') params.append('priority', ticketPriorityFilter)
+      if (ticketSearchQuery.trim()) params.append('search', ticketSearchQuery.trim())
+
+      const queryStr = params.toString() ? `?${params.toString()}` : ''
+      const res = await api.get(`/admin/support/tickets${queryStr}`)
+      setTickets(res.tickets || [])
+      setTicketCounts(res.counts || {
+        total: 0,
+        open: 0,
+        in_progress: 0,
+        answered: 0,
+        waiting_user: 0,
+        resolved: 0,
+        closed: 0,
+      })
+    } catch (err) {
+      showToast(err.message || 'Failed to load tickets', 'danger')
+    } finally {
+      if (!quiet) setTicketsLoading(false)
+    }
+  }
+
+  const openAdminTicketDetail = async (ticketId) => {
+    try {
+      setAdminTicketDetailLoading(true)
+      setAdminTicketModalOpen(true)
+      const res = await api.get(`/admin/support/tickets/${ticketId}`)
+      setSelectedAdminTicket(res.ticket)
+      setAdminReplyStatus(res.ticket.status === 'open' ? 'answered' : res.ticket.status)
+      setAdminReplyText('')
+    } catch (err) {
+      showToast(err.message || 'Failed to load ticket details', 'danger')
+    } finally {
+      setAdminTicketDetailLoading(false)
+    }
+  }
+
+  const handleAdminReplySubmit = async (e) => {
+    e.preventDefault()
+    if (!adminReplyText.trim() || !selectedAdminTicket?.id) return
+
+    try {
+      setAdminReplySending(true)
+      const res = await api.post(`/admin/support/tickets/${selectedAdminTicket.id}/reply`, {
+        message: adminReplyText.trim(),
+        status: adminReplyStatus,
+      })
+      setSelectedAdminTicket(res.ticket)
+      setAdminReplyText('')
+      showToast('Reply dispatched to user successfully!')
+      loadAdminTickets(true)
+    } catch (err) {
+      showToast(err.message || 'Failed to dispatch reply', 'danger')
+    } finally {
+      setAdminReplySending(false)
+    }
+  }
+
+  const handleAdminUpdateStatus = async (ticketId, status, priority) => {
+    try {
+      const payload = {}
+      if (status) payload.status = status
+      if (priority) payload.priority = priority
+      const res = await api.patch(`/admin/support/tickets/${ticketId}/status`, payload)
+      if (selectedAdminTicket && selectedAdminTicket.id === ticketId) {
+        setSelectedAdminTicket(res.ticket)
+      }
+      showToast('Ticket updated successfully!')
+      loadAdminTickets(true)
+    } catch (err) {
+      showToast(err.message || 'Failed to update ticket', 'danger')
+    }
+  }
+
+  const handleAdminDeleteTicket = async (ticketId, ticketNumber) => {
+    if (!window.confirm(`Delete ticket ${ticketNumber}? This will remove all messages.`)) return
+    try {
+      await api.del(`/admin/support/tickets/${ticketId}`)
+      showToast(`Ticket ${ticketNumber} deleted.`, 'warning')
+      if (selectedAdminTicket && selectedAdminTicket.id === ticketId) {
+        setAdminTicketModalOpen(false)
+        setSelectedAdminTicket(null)
+      }
+      loadAdminTickets(true)
+    } catch (err) {
+      showToast(err.message || 'Failed to delete ticket', 'danger')
+    }
   }
 
   // Derive real user initials and visual color
@@ -426,6 +550,33 @@ export default function AdminVuexy() {
                   <span className="vuexy-menu-badge" style={{ backgroundColor: '#ff9f43', color: '#fff' }}>
                     ₹{pricingConfig.pro_monthly_price}
                   </span>
+                </>
+              )}
+            </div>
+          </li>
+
+          {/* 6. Support Tickets */}
+          <li className="vuexy-menu-item">
+            <div
+              className={`vuexy-menu-link ${activeTab === 'tickets' ? 'active' : ''}`}
+              onClick={() => {
+                setActiveTab('tickets')
+                loadAdminTickets()
+              }}
+            >
+              <span className="vuexy-menu-icon">🎧</span>
+              {!sidebarCollapsed && (
+                <>
+                  <span className="vuexy-menu-text">Support Tickets</span>
+                  {ticketCounts.open > 0 ? (
+                    <span className="vuexy-menu-badge" style={{ backgroundColor: '#ea5455', color: '#fff', fontWeight: 700 }}>
+                      {ticketCounts.open} Open
+                    </span>
+                  ) : (
+                    <span className="vuexy-menu-badge" style={{ backgroundColor: '#7367f022', color: '#7367f0' }}>
+                      {ticketCounts.total}
+                    </span>
+                  )}
                 </>
               )}
             </div>
@@ -1537,6 +1688,336 @@ export default function AdminVuexy() {
               </div>
             </div>
           )}
+
+          {/* ================================================================
+              TAB 6: SUPPORT TICKETS & HELPDESK
+              ================================================================ */}
+          {activeTab === 'tickets' && (
+            <>
+              {/* TOP STAT METRIC CARDS FOR TICKETS */}
+              <div className="vuexy-stat-grid" style={{ marginBottom: '1.5rem' }}>
+                {/* 1. Total Tickets */}
+                <div
+                  className="vuexy-stat-card"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setTicketStatusFilter('all')}
+                >
+                  <div className="vuexy-stat-content">
+                    <span className="vuexy-stat-title">Total Tickets</span>
+                    <div className="vuexy-stat-val-row">
+                      <span className="vuexy-stat-number">{ticketCounts.total}</span>
+                      <span className="vuexy-stat-badge positive">(All Time)</span>
+                    </div>
+                    <span className="vuexy-stat-sub">Support &amp; Inquiries</span>
+                  </div>
+                  <div className="vuexy-stat-icon-wrapper" style={{ backgroundColor: '#7367f022', color: '#7367f0' }}>
+                    <span>🎧</span>
+                  </div>
+                </div>
+
+                {/* 2. Open / Action Required */}
+                <div
+                  className="vuexy-stat-card"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setTicketStatusFilter('open')}
+                >
+                  <div className="vuexy-stat-content">
+                    <span className="vuexy-stat-title">Open Tickets</span>
+                    <div className="vuexy-stat-val-row">
+                      <span className="vuexy-stat-number" style={{ color: ticketCounts.open > 0 ? '#ea5455' : 'inherit' }}>
+                        {ticketCounts.open}
+                      </span>
+                      <span className="vuexy-stat-badge" style={{ backgroundColor: '#fee2e2', color: '#ea5455' }}>
+                        Action Needed
+                      </span>
+                    </div>
+                    <span className="vuexy-stat-sub">Awaiting Admin Reply</span>
+                  </div>
+                  <div className="vuexy-stat-icon-wrapper" style={{ backgroundColor: '#fee2e2', color: '#ea5455' }}>
+                    <span>⚡</span>
+                  </div>
+                </div>
+
+                {/* 3. In Progress & Waiting */}
+                <div
+                  className="vuexy-stat-card"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setTicketStatusFilter('in_progress')}
+                >
+                  <div className="vuexy-stat-content">
+                    <span className="vuexy-stat-title">In Progress</span>
+                    <div className="vuexy-stat-val-row">
+                      <span className="vuexy-stat-number">{ticketCounts.in_progress}</span>
+                      <span className="vuexy-stat-badge" style={{ backgroundColor: '#fff0e1', color: '#ff9f43' }}>
+                        Under Review
+                      </span>
+                    </div>
+                    <span className="vuexy-stat-sub">{ticketCounts.waiting_user} waiting on user</span>
+                  </div>
+                  <div className="vuexy-stat-icon-wrapper" style={{ backgroundColor: '#fff0e1', color: '#ff9f43' }}>
+                    <span>⏳</span>
+                  </div>
+                </div>
+
+                {/* 4. Resolved & Answered */}
+                <div
+                  className="vuexy-stat-card"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setTicketStatusFilter('resolved')}
+                >
+                  <div className="vuexy-stat-content">
+                    <span className="vuexy-stat-title">Resolved &amp; Answered</span>
+                    <div className="vuexy-stat-val-row">
+                      <span className="vuexy-stat-number">
+                        {(ticketCounts.answered || 0) + (ticketCounts.resolved || 0)}
+                      </span>
+                      <span className="vuexy-stat-badge positive">Solved</span>
+                    </div>
+                    <span className="vuexy-stat-sub">{ticketCounts.closed || 0} closed archives</span>
+                  </div>
+                  <div className="vuexy-stat-icon-wrapper" style={{ backgroundColor: '#dcf6e8', color: '#28c76f' }}>
+                    <span>✅</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* FILTERS & CONTROLS */}
+              <div className="vuexy-card" style={{ marginBottom: '1.5rem' }}>
+                <div className="vuexy-card-header" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+                  <h5 className="vuexy-card-title">Filter Support Tickets</h5>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    {/* Status filter */}
+                    <div className="vuexy-select-wrapper">
+                      <select
+                        className="vuexy-select"
+                        value={ticketStatusFilter}
+                        onChange={(e) => setTicketStatusFilter(e.target.value)}
+                      >
+                        <option value="all">All Statuses ({ticketCounts.total})</option>
+                        <option value="open">Open ({ticketCounts.open})</option>
+                        <option value="in_progress">In Progress ({ticketCounts.in_progress})</option>
+                        <option value="answered">Answered ({ticketCounts.answered})</option>
+                        <option value="waiting_user">Waiting on User ({ticketCounts.waiting_user})</option>
+                        <option value="resolved">Resolved ({ticketCounts.resolved})</option>
+                        <option value="closed">Closed ({ticketCounts.closed})</option>
+                      </select>
+                      <span className="vuexy-select-arrow">▼</span>
+                    </div>
+
+                    {/* Priority filter */}
+                    <div className="vuexy-select-wrapper">
+                      <select
+                        className="vuexy-select"
+                        value={ticketPriorityFilter}
+                        onChange={(e) => setTicketPriorityFilter(e.target.value)}
+                      >
+                        <option value="all">All Priorities</option>
+                        <option value="urgent">Urgent</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                      </select>
+                      <span className="vuexy-select-arrow">▼</span>
+                    </div>
+
+                    {/* Search box */}
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="text"
+                        className="vuexy-form-input"
+                        placeholder="Search ticket #, user, subject…"
+                        value={ticketSearchQuery}
+                        onChange={(e) => setTicketSearchQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') loadAdminTickets()
+                        }}
+                        style={{ height: '36px', minWidth: '220px', paddingRight: '28px', fontSize: '0.85rem' }}
+                      />
+                      {ticketSearchQuery && (
+                        <span
+                          onClick={() => {
+                            setTicketSearchQuery('')
+                            setTimeout(() => loadAdminTickets(), 50)
+                          }}
+                          style={{
+                            position: 'absolute',
+                            right: '8px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            cursor: 'pointer',
+                            color: '#8b8893',
+                            fontSize: '0.85rem',
+                          }}
+                        >
+                          ✕
+                        </span>
+                      )}
+                    </div>
+
+                    <button
+                      className="vuexy-btn-export"
+                      onClick={() => loadAdminTickets()}
+                      title="Refresh Tickets"
+                      style={{ height: '36px', padding: '0 12px' }}
+                    >
+                      🔄 Refresh
+                    </button>
+                  </div>
+                </div>
+
+                {/* TICKETS TABLE */}
+                <div className="vuexy-table-responsive">
+                  <table className="vuexy-table">
+                    <thead>
+                      <tr>
+                        <th>TICKET #</th>
+                        <th>USER / CUSTOMER</th>
+                        <th>SUBJECT &amp; CATEGORY</th>
+                        <th>PRIORITY</th>
+                        <th>STATUS</th>
+                        <th>MSGS</th>
+                        <th>LAST ACTIVITY</th>
+                        <th style={{ textAlign: 'right' }}>ACTIONS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {ticketsLoading && tickets.length === 0 ? (
+                        <tr>
+                          <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: '#8b8893' }}>
+                            Loading support tickets…
+                          </td>
+                        </tr>
+                      ) : tickets.length === 0 ? (
+                        <tr>
+                          <td colSpan="8" style={{ textAlign: 'center', padding: '48px', color: '#8b8893' }}>
+                            <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🎉</div>
+                            <div style={{ fontWeight: 600, fontSize: '1rem', color: '#2f2b3d' }}>No tickets found</div>
+                            <div style={{ fontSize: '0.85rem' }}>No support requests match the selected filters.</div>
+                          </td>
+                        </tr>
+                      ) : (
+                        tickets.map((t) => {
+                          const u = t.user || {}
+                          const { initials, color } = getUserVisuals(u)
+
+                          return (
+                            <tr key={t.id}>
+                              {/* Ticket Number */}
+                              <td>
+                                <span
+                                  style={{
+                                    fontFamily: 'monospace',
+                                    fontWeight: 700,
+                                    fontSize: '0.86rem',
+                                    color: '#7367f0',
+                                    background: '#7367f015',
+                                    padding: '3px 7px',
+                                    borderRadius: '5px',
+                                  }}
+                                >
+                                  {t.ticket_number}
+                                </span>
+                              </td>
+
+                              {/* User Info */}
+                              <td>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                  <div
+                                    className="vuexy-user-avatar-sm"
+                                    style={{ backgroundColor: `${color}22`, color: color }}
+                                  >
+                                    {initials}
+                                  </div>
+                                  <div>
+                                    <div style={{ fontWeight: 600, color: '#2f2b3d', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                      {u.name || 'User'}
+                                      {u.is_pro && (
+                                        <span className="vuexy-badge-green" style={{ fontSize: '0.68rem', padding: '1px 5px', fontWeight: 700 }}>
+                                          PRO
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div style={{ fontSize: '0.78rem', color: '#8b8893' }}>{u.email}</div>
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* Subject & Category */}
+                              <td>
+                                <div style={{ fontWeight: 600, color: '#2f2b3d', fontSize: '0.88rem', maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {t.subject}
+                                </div>
+                                <div style={{ fontSize: '0.75rem', color: '#8b8893', textTransform: 'capitalize' }}>
+                                  {t.category ? t.category.replace('_', ' ') : 'General'}
+                                </div>
+                              </td>
+
+                              {/* Priority */}
+                              <td>
+                                {t.priority === 'urgent' && <span className="vuexy-badge-red">Urgent</span>}
+                                {t.priority === 'high' && <span className="vuexy-badge-orange">High</span>}
+                                {t.priority === 'medium' && <span className="vuexy-badge-info">Medium</span>}
+                                {t.priority === 'low' && <span className="vuexy-badge-gray">Low</span>}
+                              </td>
+
+                              {/* Status */}
+                              <td>
+                                {t.status === 'open' && <span className="vuexy-badge-primary">Open</span>}
+                                {t.status === 'in_progress' && <span className="vuexy-badge-orange">In Progress</span>}
+                                {t.status === 'answered' && <span className="vuexy-badge-info">Answered</span>}
+                                {t.status === 'waiting_user' && <span className="vuexy-badge-orange">Waiting User</span>}
+                                {t.status === 'resolved' && <span className="vuexy-badge-green">Resolved</span>}
+                                {t.status === 'closed' && <span className="vuexy-badge-gray">Closed</span>}
+                              </td>
+
+                              {/* Message Count */}
+                              <td>
+                                <span style={{ fontSize: '0.82rem', color: '#444050', fontWeight: 600 }}>
+                                  💬 {t.messages_count || 1}
+                                </span>
+                              </td>
+
+                              {/* Last Activity */}
+                              <td>
+                                <div style={{ fontSize: '0.8rem', color: '#2f2b3d' }}>
+                                  {new Date(t.updated_at).toLocaleDateString()}
+                                </div>
+                                <div style={{ fontSize: '0.74rem', color: '#8b8893' }}>
+                                  {new Date(t.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                              </td>
+
+                              {/* Actions */}
+                              <td style={{ textAlign: 'right' }}>
+                                <div style={{ display: 'inline-flex', gap: '6px' }}>
+                                  <button
+                                    className="vuexy-btn-add"
+                                    onClick={() => openAdminTicketDetail(t.id)}
+                                    style={{ height: '30px', padding: '0 10px', fontSize: '0.78rem' }}
+                                    title="Open discussion and reply"
+                                  >
+                                    View &amp; Reply
+                                  </button>
+                                  <button
+                                    className="vuexy-btn-export"
+                                    onClick={() => handleAdminDeleteTicket(t.id, t.ticket_number)}
+                                    style={{ height: '30px', padding: '0 8px', fontSize: '0.78rem', color: '#ea5455' }}
+                                    title="Delete ticket"
+                                  >
+                                    🗑️
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
         </main>
       </div>
 
@@ -1699,6 +2180,315 @@ export default function AdminVuexy() {
                   >
                     Cancel
                   </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================================================
+          MODAL: SUPPORT TICKET DISCUSSION & ADMIN REPLY
+          ==================================================================== */}
+      {adminTicketModalOpen && (
+        <div
+          className="vuexy-offcanvas-backdrop"
+          onClick={() => {
+            setAdminTicketModalOpen(false)
+            setSelectedAdminTicket(null)
+          }}
+          style={{ display: 'grid', placeItems: 'center', zIndex: 1100, padding: 20 }}
+        >
+          <div
+            className="vuexy-card"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: 'min(760px, 100%)',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 20px 45px rgba(0, 0, 0, 0.25)',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              margin: 0,
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              className="vuexy-card-header"
+              style={{
+                padding: '1.25rem 1.5rem',
+                borderBottom: '1px solid rgba(47, 43, 61, 0.1)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                backgroundColor: '#ffffff',
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <span
+                    style={{
+                      fontFamily: 'monospace',
+                      fontWeight: 700,
+                      fontSize: '0.9rem',
+                      color: '#7367f0',
+                      backgroundColor: '#7367f015',
+                      padding: '3px 8px',
+                      borderRadius: '5px',
+                    }}
+                  >
+                    {selectedAdminTicket?.ticket_number || 'TICKET'}
+                  </span>
+                  <span style={{ fontSize: '0.8rem', color: '#8b8893', textTransform: 'capitalize' }}>
+                    {selectedAdminTicket?.category ? selectedAdminTicket.category.replace('_', ' ') : 'General'}
+                  </span>
+                  {selectedAdminTicket?.user?.is_pro && (
+                    <span className="vuexy-badge-green" style={{ fontSize: '0.72rem', padding: '2px 6px', fontWeight: 700 }}>
+                      ⭐ VIP PRO CUSTOMER
+                    </span>
+                  )}
+                </div>
+                <h4 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: '#2f2b3d' }}>
+                  {selectedAdminTicket?.subject || 'Loading ticket…'}
+                </h4>
+              </div>
+
+              <button
+                className="vuexy-offcanvas-close"
+                onClick={() => {
+                  setAdminTicketModalOpen(false)
+                  setSelectedAdminTicket(null)
+                }}
+                style={{ fontSize: '1.2rem', padding: '4px 8px' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* User Metadata & Controls Toolbar */}
+            {selectedAdminTicket && (
+              <div
+                style={{
+                  padding: '0.85rem 1.5rem',
+                  backgroundColor: '#f8f7fa',
+                  borderBottom: '1px solid rgba(47, 43, 61, 0.08)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 12,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.85rem' }}>
+                  <span style={{ fontWeight: 600, color: '#2f2b3d' }}>
+                    👤 {selectedAdminTicket.user?.name || 'Customer'}
+                  </span>
+                  <span style={{ color: '#8b8893' }}>({selectedAdminTicket.user?.email})</span>
+                  {selectedAdminTicket.user?.last_login_country && (
+                    <span style={{ color: '#8b8893' }}>📍 {selectedAdminTicket.user.last_login_country}</span>
+                  )}
+                </div>
+
+                {/* Quick Status and Priority Selectors */}
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem' }}>
+                    <span style={{ fontWeight: 600, color: '#8b8893' }}>Status:</span>
+                    <select
+                      className="vuexy-select"
+                      value={selectedAdminTicket.status}
+                      onChange={(e) => handleAdminUpdateStatus(selectedAdminTicket.id, e.target.value, null)}
+                      style={{ padding: '4px 10px', fontSize: '0.8rem', height: '30px' }}
+                    >
+                      <option value="open">Open</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="answered">Answered</option>
+                      <option value="waiting_user">Waiting User</option>
+                      <option value="resolved">Resolved</option>
+                      <option value="closed">Closed</option>
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem' }}>
+                    <span style={{ fontWeight: 600, color: '#8b8893' }}>Priority:</span>
+                    <select
+                      className="vuexy-select"
+                      value={selectedAdminTicket.priority}
+                      onChange={(e) => handleAdminUpdateStatus(selectedAdminTicket.id, null, e.target.value)}
+                      style={{ padding: '4px 10px', fontSize: '0.8rem', height: '30px' }}
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="urgent">Urgent</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Conversation Messages Thread */}
+            <div
+              style={{
+                padding: '1.25rem 1.5rem',
+                flex: 1,
+                overflowY: 'auto',
+                backgroundColor: '#ffffff',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 14,
+                maxHeight: '380px',
+              }}
+            >
+              {adminTicketDetailLoading && !selectedAdminTicket ? (
+                <div style={{ textAlign: 'center', padding: '40px', color: '#8b8893' }}>
+                  Loading conversation history…
+                </div>
+              ) : selectedAdminTicket?.messages?.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px', color: '#8b8893' }}>
+                  No messages recorded in this ticket.
+                </div>
+              ) : (
+                selectedAdminTicket?.messages?.map((msg, index) => {
+                  const isAdmin = msg.is_admin_reply
+
+                  return (
+                    <div
+                      key={msg.id || index}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: isAdmin ? 'flex-end' : 'flex-start',
+                        width: '100%',
+                      }}
+                    >
+                      {/* Sender details */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          marginBottom: 4,
+                          fontSize: '0.74rem',
+                          color: '#8b8893',
+                        }}
+                      >
+                        {isAdmin ? (
+                          <>
+                            <span
+                              style={{
+                                fontWeight: 700,
+                                color: '#7367f0',
+                                backgroundColor: '#7367f015',
+                                padding: '1px 6px',
+                                borderRadius: '4px',
+                              }}
+                            >
+                              🛡️ Administrator / Support Specialist
+                            </span>
+                            <span>• {new Date(msg.created_at).toLocaleString()}</span>
+                          </>
+                        ) : (
+                          <>
+                            <span style={{ fontWeight: 600, color: '#2f2b3d' }}>
+                              👤 {selectedAdminTicket.user?.name || 'Customer'}
+                            </span>
+                            <span>• {new Date(msg.created_at).toLocaleString()}</span>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Message Bubble */}
+                      <div
+                        style={{
+                          maxWidth: '85%',
+                          padding: '12px 16px',
+                          borderRadius: '10px',
+                          fontSize: '0.9rem',
+                          lineHeight: 1.5,
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                          backgroundColor: isAdmin ? '#7367f0' : '#f8f7fa',
+                          color: isAdmin ? '#ffffff' : '#2f2b3d',
+                          border: isAdmin ? 'none' : '1px solid rgba(47, 43, 61, 0.08)',
+                          boxShadow: isAdmin ? '0 2px 6px rgba(115, 103, 240, 0.35)' : 'none',
+                        }}
+                      >
+                        {msg.message}
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+
+            {/* Admin Reply Composer Form */}
+            <div
+              style={{
+                padding: '1.25rem 1.5rem',
+                backgroundColor: '#f8f7fa',
+                borderTop: '1px solid rgba(47, 43, 61, 0.1)',
+              }}
+            >
+              <form onSubmit={handleAdminReplySubmit}>
+                <div className="vuexy-form-group" style={{ marginBottom: '10px' }}>
+                  <label className="vuexy-form-label" style={{ fontWeight: 600 }}>
+                    Official Reply to Customer:
+                  </label>
+                  <textarea
+                    rows={3}
+                    className="vuexy-form-input"
+                    placeholder="Type your response here. The customer will immediately see this in their Support Section…"
+                    value={adminReplyText}
+                    onChange={(e) => setAdminReplyText(e.target.value)}
+                    required
+                    disabled={adminReplySending}
+                    style={{
+                      fontFamily: 'inherit',
+                      resize: 'none',
+                      backgroundColor: '#ffffff',
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.82rem' }}>
+                    <span style={{ fontWeight: 600, color: '#444050' }}>Set status upon reply:</span>
+                    <select
+                      className="vuexy-select"
+                      value={adminReplyStatus}
+                      onChange={(e) => setAdminReplyStatus(e.target.value)}
+                      style={{ padding: '4px 10px', fontSize: '0.82rem', height: '32px' }}
+                    >
+                      <option value="answered">Answered (Default)</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="waiting_user">Waiting on User</option>
+                      <option value="resolved">Resolved</option>
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <button
+                      type="button"
+                      className="vuexy-btn-export"
+                      onClick={() => {
+                        setAdminTicketModalOpen(false)
+                        setSelectedAdminTicket(null)
+                      }}
+                      style={{ height: '34px', padding: '0 14px' }}
+                    >
+                      Close
+                    </button>
+
+                    <button
+                      type="submit"
+                      className="vuexy-btn-add"
+                      disabled={adminReplySending || !adminReplyText.trim()}
+                      style={{ height: '34px', padding: '0 16px' }}
+                    >
+                      {adminReplySending ? 'Sending…' : '✉️ Dispatch Reply'}
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>

@@ -15,6 +15,7 @@ import LinkedIn from './pages/LinkedIn'
 import AdminLogin from './pages/AdminLogin'
 import AdminVuexy from './pages/AdminVuexy'
 import Profile from './pages/Profile'
+import Support from './pages/Support'
 
 function Protected({ children }) {
   const { user, loading } = useAuth()
@@ -27,8 +28,12 @@ function AdminProtected({ children }) {
   const { user, loading } = useAuth()
   const loc = useLocation()
   if (loading) return <div style={{ padding: '60px', textAlign: 'center', color: '#6c757d' }}>Verifying Administrator Session…</div>
-  if (!user || !user.is_admin) {
+  if (!user) {
     return <Navigate to="/admin/login" state={{ from: loc.pathname }} replace />
+  }
+  const isAdmin = Boolean(user.is_admin && user.is_admin !== '0' && user.is_admin !== 0)
+  if (!isAdmin) {
+    return <Navigate to="/dashboard" replace />
   }
   return children
 }
@@ -65,6 +70,10 @@ const ROUTE_META = {
   '/profile': {
     title: 'My Profile & Account Settings | Smartcvmaker',
     desc: 'Edit your profile details, password, and manage your Smartcvmaker subscription.',
+  },
+  '/support': {
+    title: 'Customer Support & Helpdesk | Smartcvmaker',
+    desc: 'Get technical help, template assistance, and talk with our customer support specialists.',
   },
   '/login': {
     title: 'Sign In | Smartcvmaker',
@@ -117,6 +126,7 @@ export default function App() {
         <Route path="/tools/linkedin" element={<Protected><LinkedIn /></Protected>} />
         <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
         <Route path="/profile" element={<Protected><Profile /></Protected>} />
+        <Route path="/support" element={<Protected><Support /></Protected>} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminProtected><AdminVuexy /></AdminProtected>} />
         <Route path="/builder/:id" element={<Protected><Builder /></Protected>} />

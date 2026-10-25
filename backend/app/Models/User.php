@@ -106,4 +106,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(LoginActivity::class);
     }
+
+    public function supportTickets()
+    {
+        return $this->hasMany(SupportTicket::class);
+    }
 }

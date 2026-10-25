@@ -1,16 +1,22 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth'
 import '../vuexy.css'
 
 export default function AdminLogin() {
-  const { adminLogin } = useAuth()
+  const { user, adminLogin } = useAuth()
   const nav = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [remember, setRemember] = useState(true)
+
+  useEffect(() => {
+    if (user && Boolean(user.is_admin && user.is_admin !== '0' && user.is_admin !== 0)) {
+      nav('/admin', { replace: true })
+    }
+  }, [user, nav])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -79,6 +85,32 @@ export default function AdminLogin() {
             Please sign in with your administrator credentials
           </p>
         </div>
+
+        {user && !user.is_admin && (
+          <div
+            style={{
+              backgroundColor: '#eff6ff',
+              border: '1px solid #bfdbfe',
+              color: '#1e40af',
+              padding: '10px 14px',
+              borderRadius: '6px',
+              fontSize: '0.84rem',
+              marginBottom: '1.25rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+            }}
+          >
+            <div>
+              Signed in as <strong>{user.name}</strong> ({user.email}). Administrator privileges required below.
+            </div>
+            <div>
+              <Link to="/dashboard" style={{ color: '#2563eb', fontWeight: 600, textDecoration: 'underline' }}>
+                ← Return to your User Dashboard
+              </Link>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div

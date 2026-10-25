@@ -67,7 +67,7 @@ class AdminController extends Controller
                 'total_logins' => LoginActivity::count(),
             ],
             'settings' => [
-                'pro_monthly_price' => (float) Setting::get('pro_monthly_price', 799.00),
+                'pro_monthly_price' => (float) Setting::get('pro_monthly_price', 299.00),
                 'pro_annual_price' => (float) Setting::get('pro_annual_price', 5999.00),
                 'trial_days' => (int) Setting::get('trial_days', 30),
                 'currency' => Setting::get('currency', 'INR'),
@@ -119,7 +119,7 @@ class AdminController extends Controller
         return response()->json([
             'message' => "Settings & Razorpay configuration successfully updated!",
             'settings' => [
-                'pro_monthly_price' => (float) Setting::get('pro_monthly_price', 799.00),
+                'pro_monthly_price' => (float) Setting::get('pro_monthly_price', 299.00),
                 'pro_annual_price' => (float) Setting::get('pro_annual_price', 5999.00),
                 'trial_days' => (int) Setting::get('trial_days', 30),
                 'currency' => Setting::get('currency', 'INR'),

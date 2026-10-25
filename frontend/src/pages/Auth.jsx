@@ -17,9 +17,13 @@ function AuthForm({ mode }) {
     e.preventDefault()
     setErr(''); setBusy(true)
     try {
-      if (isReg) await register(f.name, f.email, f.password)
-      else await login(f.email, f.password)
-      nav(dest, { replace: true })
+      let r
+      if (isReg) r = await register(f.name, f.email, f.password)
+      else r = await login(f.email, f.password)
+      const loggedUser = r?.user
+      const isUserAdmin = Boolean(loggedUser?.is_admin && loggedUser.is_admin !== '0' && loggedUser.is_admin !== 0)
+      const targetDest = (!isUserAdmin && dest.startsWith('/admin')) ? '/dashboard' : dest
+      nav(targetDest, { replace: true })
     } catch (ex) {
       setErr(ex.message)
     } finally { setBusy(false) }

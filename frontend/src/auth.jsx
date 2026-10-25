@@ -20,6 +20,7 @@ export function AuthProvider({ children }) {
     const r = await api.post('/auth/login', { email, password })
     setToken(r.token)
     setUser(r.user)
+    return r
   }, [])
 
   const adminLogin = useCallback(async (email, password) => {
@@ -33,6 +34,7 @@ export function AuthProvider({ children }) {
     const r = await api.post('/auth/register', { name, email, password })
     setToken(r.token)
     setUser(r.user)
+    return r
   }, [])
 
   const logout = useCallback(async () => {
