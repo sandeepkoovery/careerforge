@@ -90,6 +90,13 @@ export default function App() {
     document.title = meta.title
     const descEl = document.querySelector('meta[name="description"]')
     if (descEl) descEl.setAttribute('content', meta.desc)
+
+    if (typeof window.gtag === 'function') {
+      window.gtag('config', 'G-T1VFX38ZZ0', {
+        page_title: meta.title,
+        page_path: pathname + window.location.search,
+      })
+    }
   }, [pathname])
   const builder = pathname.startsWith('/builder')
   const isAdmin = pathname.startsWith('/admin')
