@@ -115,13 +115,14 @@ export default function Builder() {
       resetToBlank(false)
       return
     }
-    const prof = PROFESSIONS.find((p) => p.id === profId)
+    const resolvedId = profId === 'dev' ? 'developer' : (profId === 'datascience' ? 'data_scientist' : profId)
+    const prof = PROFESSIONS.find((p) => p.id === resolvedId || p.id === profId)
     if (!prof) return
     mutate((r) => {
       r.data = normalise(structuredClone(prof.data))
       r.title = `${prof.data.basics.name} – ${prof.data.basics.title}`
     })
-    setProfChoice(profId)
+    setProfChoice(prof.id)
     setSampleSuccess(`Loaded ${prof.label} sample profile!`)
     setTimeout(() => setSampleSuccess(''), 3500)
   }
@@ -395,9 +396,9 @@ export default function Builder() {
               </button>
               {[
                 { id: 'civil', icon: '🏗️', label: 'Civil Engineer' },
-                { id: 'dev', icon: '💻', label: 'Developer' },
+                { id: 'developer', icon: '💻', label: 'Developer' },
                 { id: 'designer', icon: '🎨', label: 'UI/UX Designer' },
-                { id: 'datascience', icon: '📊', label: 'Data Scientist' },
+                { id: 'data_scientist', icon: '📊', label: 'Data Scientist' },
               ].map((qp) => (
                 <button
                   key={qp.id}
