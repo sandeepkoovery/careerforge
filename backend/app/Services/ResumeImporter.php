@@ -9,29 +9,64 @@ class ResumeImporter
 {
     private const MONTH = '(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?';
 
-    public function import(string $text): array
+    private const TITLE_WORDS = [
+        'engineer', 'developer', 'designer', 'manager', 'architect', 'lead', 'specialist',
+        'analyst', 'consultant', 'administrator', 'officer', 'executive', 'programmer',
+        'director', 'intern', 'technician', 'scientist', 'coordinator', 'assistant', 'head',
+        'founder', 'president', 'vp', 'associate', 'software', 'frontend', 'backend', 'fullstack',
+        'full stack', 'devops', 'qa', 'tester', 'ui', 'ux', 'product', 'project'
+    ];
+
+    public function import(string $text, ?string $filename = null, $user = null): array
     {
+        $text = preg_replace('/((?:19|20)\d{2})([A-Z][a-z]{2}\s*(?:19|20)\d{2})/', '$1 – $2', $text);
+        $text = preg_replace('/((?:19|20)\d{2})(Present|Current|Now)/i', '$1 – $2', $text);
         $sections = SectionParser::parse($text);
         $data = ResumeText::blank();
 
-        $this->basics($data, $sections['header'] ?? [], $text);
-        $data['basics']['summary'] = trim(implode(' ', array_map([SectionParser::class, 'stripBullet'], $sections['summary'] ?? [])));
+        $this->basics($data, $sections['header'] ?? [], $text, $filename, $user);
+
+        $summary = trim(implode(' ', array_map([SectionParser::class, 'stripBullet'], $sections['summary'] ?? [])));
+        if ($summary === '') {
+            foreach ($sections['header'] ?? [] as $line) {
+                $clean = SectionParser::stripBullet($line);
+                if (mb_strlen($clean) > 80 && !preg_match('/@|\d{7,}|https?:/i', $clean)) {
+                    $summary = trim($summary . ' ' . $clean);
+                }
+            }
+        }
+        $data['basics']['summary'] = $summary;
+
         $data['experience'] = $this->experience($sections['experience'] ?? []);
         $data['education'] = $this->education($sections['education'] ?? []);
         $data['skills'] = $this->skills($sections['skills'] ?? []);
+        $data['projects'] = $this->projects($sections['projects'] ?? []);
 
-        foreach ($sections['projects'] ?? [] as $line) {
-            $line = SectionParser::stripBullet($line);
-            if (str_contains($line, ':') && mb_strlen($line) > 20) {
-                [$n, $desc] = array_map('trim', explode(':', $line, 2));
-                $data['projects'][] = ['id' => uniqid('p'), 'name' => $n, 'link' => '', 'description' => $desc];
-            } elseif ($data['projects'] && mb_strlen($line) > 20) {
-                $last = array_key_last($data['projects']);
-                $data['projects'][$last]['description'] .= ' '.$line;
-            } else {
-                $data['projects'][] = ['id' => uniqid('p'), 'name' => $line, 'link' => '', 'description' => ''];
+        // If experience was empty but projects has work experiences
+        if (empty($data['experience']) && !empty($data['projects'])) {
+            $converted = [];
+            foreach ($data['projects'] as $p) {
+                $pName = $p['name'];
+                $pDesc = $p['description'];
+                $isJob = (bool) preg_match('/\b(engineer|developer|designer|manager|architect|lead|specialist|php|software)\b/i', $pName . ' ' . $pDesc);
+                if ($isJob) {
+                    $converted[] = [
+                        'id' => uniqid('e'),
+                        'role' => $pName ?: 'Software Engineer',
+                        'company' => '',
+                        'location' => '',
+                        'start' => '',
+                        'end' => '',
+                        'current' => false,
+                        'bullets' => $pDesc ? [$pDesc] : []
+                    ];
+                }
+            }
+            if ($converted) {
+                $data['experience'] = $converted;
             }
         }
+
         foreach ($sections['certifications'] ?? [] as $line) {
             $line = SectionParser::stripBullet($line);
             if ($line !== '') {
@@ -43,7 +78,7 @@ class ResumeImporter
         return $data;
     }
 
-    private function basics(array &$data, array $header, string $fullText): void
+    private function basics(array &$data, array $header, string $fullText, ?string $filename = null, $user = null): void
     {
         $b = &$data['basics'];
         $headText = implode("\n", $header) ?: mb_substr($fullText, 0, 500);
@@ -66,14 +101,91 @@ class ResumeImporter
         }
 
         foreach ($header as $i => $line) {
-            if (preg_match('/@|\d{4}|https?:|www\./i', $line) || str_word_count($line) > 5) {
+            $cleaned = trim(preg_replace([
+                '/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i',
+                '/(\+?\d[\d\s().-]{7,}\d)/',
+                '/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/[^\s|,]+/i',
+                '/(?:https?:\/\/)?(?:www\.)?[a-z0-9-]+\.(?:com|io|dev|me|net|org)\/?[^\s|,]*/i',
+                '/[|•·,–-]+/',
+            ], ' ', $line));
+            $cleaned = trim(preg_replace('/\s+/', ' ', $cleaned));
+
+            if ($cleaned === '' || preg_match('/\d{4}|https?:|www\./i', $cleaned) || str_word_count($cleaned) > 5) {
                 continue;
             }
             if ($b['name'] === '') {
-                $b['name'] = $line;
+                $b['name'] = $cleaned;
             } elseif ($b['title'] === '') {
-                $b['title'] = $line;
+                $b['title'] = $cleaned;
                 break;
+            }
+        }
+
+        // Smart check: Did a job title get mistakenly assigned as the person's name?
+        $nameIsTitle = false;
+        if ($b['name'] !== '') {
+            $nameLower = mb_strtolower($b['name']);
+            foreach (self::TITLE_WORDS as $tw) {
+                if (preg_match('/\b' . preg_quote($tw, '/') . '\b/i', $nameLower)) {
+                    $nameIsTitle = true;
+                    break;
+                }
+            }
+        }
+
+        // Extract potential name and role from filename (e.g. "Vasanthan RK - Senior Software Engineer Resume")
+        $fileCandidateName = '';
+        $fileCandidateRole = '';
+        if ($filename) {
+            $baseName = trim(preg_replace('/\.(pdf|docx|txt)$/i', '', $filename));
+            $cleanBase = trim(preg_replace('/[_\s]+/', ' ', $baseName));
+            if (preg_match('/^([A-Za-z\s.]+?)\s*[-–—|]\s*(.+?)(?:\s+(?:resume|cv))?$/i', $cleanBase, $fm)) {
+                $fileCandidateName = trim($fm[1]);
+                $fileCandidateRole = trim(preg_replace('/\b(resume|cv)\b/i', '', $fm[2]));
+            } elseif (preg_match('/^([A-Za-z\s.]+?)(?:\s+(?:resume|cv))$/i', $cleanBase, $fm)) {
+                $fileCandidateName = trim($fm[1]);
+            } elseif (preg_match('/^[A-Za-z\s.]{2,40}$/', $cleanBase) && !preg_match('/\b(resume|cv|document|myresume|profile|doc)\b/i', $cleanBase)) {
+                $fileCandidateName = trim($cleanBase);
+            }
+        }
+
+        if ($nameIsTitle) {
+            $detectedTitle = $b['name'];
+            if ($b['location'] === '' && $b['title'] !== '') {
+                $b['location'] = $b['title'];
+            }
+            $b['title'] = $fileCandidateRole ?: $detectedTitle;
+
+            if ($fileCandidateName !== '') {
+                $b['name'] = $fileCandidateName;
+            } elseif (!empty($b['email'])) {
+                $emailPrefix = explode('@', $b['email'])[0];
+                $nameParts = preg_split('/[._-]/', $emailPrefix);
+                $b['name'] = ucwords(implode(' ', array_filter($nameParts, fn($p) => !is_numeric($p) && strlen($p) > 1)));
+            } elseif ($user && !empty($user->name)) {
+                $b['name'] = $user->name;
+            }
+        } elseif ($b['name'] === '') {
+            if ($fileCandidateName !== '') {
+                $b['name'] = $fileCandidateName;
+                if ($b['title'] === '' && $fileCandidateRole !== '') {
+                    $b['title'] = $fileCandidateRole;
+                }
+            } elseif (!empty($b['email'])) {
+                $emailPrefix = explode('@', $b['email'])[0];
+                $nameParts = preg_split('/[._-]/', $emailPrefix);
+                $b['name'] = ucwords(implode(' ', array_filter($nameParts, fn($p) => !is_numeric($p) && strlen($p) > 1)));
+            } elseif ($user && !empty($user->name)) {
+                $b['name'] = $user->name;
+            }
+        }
+
+        // Ensure title is not just a duplicate of location
+        if ($b['title'] !== '' && !empty($b['location'])) {
+            $locNorm = strtolower(preg_replace('/[^a-z]/', '', $b['location']));
+            $titleNorm = strtolower(preg_replace('/[^a-z]/', '', $b['title']));
+            if ($locNorm === $titleNorm || str_contains($locNorm, $titleNorm) || str_contains($titleNorm, $locNorm)) {
+                $b['title'] = $fileCandidateRole ?: ($nameIsTitle ? $detectedTitle : 'Software Engineer');
             }
         }
     }
@@ -230,5 +342,91 @@ class ResumeImporter
         }
 
         return array_slice(array_values($skills), 0, 40);
+    }
+
+    private function projects(array $lines): array
+    {
+        $projects = [];
+        $cur = null;
+
+        $isDateLine = function (string $str): bool {
+            $str = trim($str);
+            if (preg_match('/^(present|current|now)$/i', $str)) return true;
+            if (preg_match('/^(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*(?:19|20)\d{2}$/i', $str)) return true;
+            if (preg_match('/^(?:19|20)\d{2}\s*[-–—to]\s*(?:(?:19|20)\d{2}|present|current)$/i', $str)) return true;
+            return false;
+        };
+
+        $isWorkExp = function (string $name): bool {
+            return (bool) preg_match('/\b(senior software engineer|php developer|web developer|lead engineer|solutions pvt|technologies|technology|it solutions)\b/i', $name);
+        };
+
+        foreach ($lines as $raw) {
+            $line = SectionParser::stripBullet($raw);
+            if ($line === '' || $line === '-') {
+                continue;
+            }
+
+            if ($isDateLine($line) || preg_match('/^(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|\d{4})\b/i', $line)) {
+                if ($cur && empty($cur['period'])) {
+                    $cur['period'] = $line;
+                }
+                continue;
+            }
+
+            $dateAtEnd = null;
+            if (preg_match('/\s+(Present|Current|Now|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*(?:19|20)\d{2})$/i', $line, $dm)) {
+                $dateAtEnd = $dm[1];
+                $line = trim(substr($line, 0, -strlen($dm[0])));
+            }
+
+            $isShort = mb_strlen($line) <= 65 && !str_ends_with($line, '.') && !str_ends_with($line, ',');
+            $hasColon = str_contains($line, ':') && mb_strlen(explode(':', $line)[0]) <= 50;
+
+            if ($hasColon) {
+                if ($cur) {
+                    $projects[] = $cur;
+                    $cur = null;
+                }
+                [$name, $desc] = array_map('trim', explode(':', $line, 2));
+                $projects[] = [
+                    'id' => uniqid('p'),
+                    'name' => $name,
+                    'period' => $dateAtEnd ?: 'Present',
+                    'link' => '',
+                    'description' => $desc,
+                ];
+                continue;
+            }
+
+            if ($isShort && !$isWorkExp($line)) {
+                if ($cur) {
+                    $projects[] = $cur;
+                }
+                $cur = [
+                    'id' => uniqid('p'),
+                    'name' => $line,
+                    'period' => $dateAtEnd ?: '',
+                    'link' => '',
+                    'description' => '',
+                ];
+            } else {
+                if ($cur) {
+                    $cur['description'] = $cur['description'] === '' ? $line : $cur['description'] . ' ' . $line;
+                }
+            }
+        }
+
+        if ($cur) {
+            $projects[] = $cur;
+        }
+
+        foreach ($projects as &$p) {
+            if (empty($p['period'])) {
+                $p['period'] = 'Present';
+            }
+        }
+
+        return $projects;
     }
 }

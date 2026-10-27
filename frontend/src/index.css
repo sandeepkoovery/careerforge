@@ -115,6 +115,7 @@ h1, h2, h3, h4 { font-family: var(--display); line-height: 1.15; letter-spacing:
 .btn-primary:hover { background: var(--grad); box-shadow: 0 12px 28px -6px rgba(79, 70, 229, 0.65); filter: brightness(1.05); }
 .btn-ghost { background: transparent; border-color: transparent; box-shadow: none; }
 .btn-ghost:hover { background: var(--surface-2); border-color: transparent; }
+.btn-primary.btn-ghost, .btn-ghost.btn-primary { background: var(--grad); color: #fff; }
 .btn-danger:hover { border-color: var(--bad); color: var(--bad); }
 .btn-lg { padding: 13px 26px; font-size: 1rem; border-radius: 13px; }
 .btn-sm { padding: 6px 12px; font-size: 0.82rem; border-radius: 8px; }
@@ -345,13 +346,23 @@ h1, h2, h3, h4 { font-family: var(--display); line-height: 1.15; letter-spacing:
     margin: 0 auto !important;
     box-shadow: none !important;
   }
-  .paper {
+  .no-print, .page-break-badge, .preview-toolbar {
+    display: none !important;
+  }
+  .paper, .resume-page-sheet {
     width: 794px !important;
+    height: 1123px !important;
     min-height: 1123px !important;
     margin: 0 auto !important;
     box-shadow: none !important;
-    page-break-after: avoid;
+    page-break-after: always !important;
+    break-after: page !important;
+    overflow: hidden !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+  .resume-page-sheet:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
   }
 }

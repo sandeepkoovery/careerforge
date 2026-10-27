@@ -12,26 +12,85 @@ function Bullets({ items, style }) {
   return <ul style={{ margin: '4px 0 0', paddingLeft: 18, ...style }}>{items.map((b, i) => <li key={i}>{b}</li>)}</ul>
 }
 
+function ProjectRow({ p, accent, style, nameStyle, dateStyle, descStyle }) {
+  return (
+    <div key={p.id} className="proj-item" style={{ marginBottom: 11, ...style }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
+        <strong style={{ fontSize: 13, color: '#0f172a', ...nameStyle }}>{p.name}</strong>
+        {(p.period || p.date) && (
+          <span className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap', fontWeight: 500, color: '#64748b', ...dateStyle }}>
+            {p.period || p.date}
+          </span>
+        )}
+      </div>
+      {p.link && <div style={{ fontSize: 11, color: accent, marginBottom: 2 }}>{p.link}</div>}
+      {p.description && <div style={{ fontSize: 12, marginTop: 2, lineHeight: 1.45, color: '#334155', ...descStyle }}>{p.description}</div>}
+    </div>
+  )
+}
+
+const eduDates = (e) => [e.start, e.current ? 'Present' : e.end].filter(Boolean).join(' – ') || e.year || ''
+
+function EduRow({ e, accent, style, align = 'left', isDark = false }) {
+  const dates = eduDates(e)
+  const line = eduLine(e)
+  const sub = [line, e.details].filter(Boolean).join(' · ')
+  const textColor = isDark ? '#ffffff' : '#0f172a'
+  const subColor = isDark ? 'rgba(255,255,255,.82)' : '#475569'
+  const dateColor = isDark ? 'rgba(255,255,255,.75)' : '#64748b'
+
+  if (align === 'center') {
+    return (
+      <div key={e.id} className="edu-item" style={{ textAlign: 'center', marginBottom: 8, ...style }}>
+        <strong style={{ fontSize: 13, color: textColor }}>{e.school}</strong>
+        {(sub || dates) && (
+          <div style={{ fontSize: 12, color: subColor, marginTop: 1 }}>
+            {[sub, dates].filter(Boolean).join('  ·  ')}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div key={e.id} className="edu-item" style={{ marginBottom: 8, ...style }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+        <strong style={{ fontSize: 13, color: textColor }}>{e.school}</strong>
+        {dates && (
+          <span className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap', fontWeight: 500, color: dateColor }}>
+            {dates}
+          </span>
+        )}
+      </div>
+      {sub && <div style={{ fontSize: 12, color: subColor, marginTop: 1 }}>{sub}</div>}
+    </div>
+  )
+}
+
 /* =====================================================================
    1. Aurora (Modern · Sidebar) - FREE
    ===================================================================== */
 function Modern({ d, accent, isWhiteText }) {
   const b = d.basics || {}
-  const H = ({ children }) => (
-    <h3 style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 2, fontWeight: 700, color: accent, borderBottom: `2px solid ${accent}22`, paddingBottom: 4, margin: '22px 0 10px' }}>{children}</h3>
+  const H = ({ children, style }) => (
+    <h3 style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 2, fontWeight: 700, color: accent, borderBottom: `2px solid ${accent}22`, paddingBottom: 4, margin: '22px 0 10px', ...style }}>{children}</h3>
   )
   const SH = ({ children }) => (
     <h3 style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 2, fontWeight: 700, margin: '24px 0 10px', color: '#ffffff', opacity: 0.95, borderBottom: '1px solid rgba(255,255,255,.3)', paddingBottom: 4 }}>{children}</h3>
   )
   return (
-    <div className="paper-body" style={{ display: 'grid', gridTemplateColumns: '250px 1fr', minHeight: 1123, background: `linear-gradient(to right, ${accent} 250px, transparent 250px)` }}>
-      <aside style={{ color: '#fff', padding: '44px 24px', fontSize: 12 }}>
-        <div style={{ width: 84, height: 84, borderRadius: '50%', background: 'rgba(255,255,255,.18)', display: 'grid', placeItems: 'center', fontSize: 32, fontWeight: 700, marginBottom: 6 }}>
-          {(b.name || 'U').trim().charAt(0).toUpperCase()}
-        </div>
-        <SH>Contact</SH>
-        {contacts(b).map((c, i) => <div key={i} style={{ marginBottom: 6, wordBreak: 'break-word', color: '#ffffff' }}>{c}</div>)}
-        {some(d.skills) && <><SH>Skills</SH>{d.skills.map((s, i) => <div key={i} style={{ marginBottom: 5, color: '#ffffff' }}>▪ {s}</div>)}</>}
+    <div className="paper-body" style={{ display: 'flex', flexDirection: 'row', minHeight: 1123, height: 1123, overflow: 'hidden', background: `linear-gradient(to right, ${accent} 250px, transparent 250px)` }}>
+      <aside style={{ width: 250, minWidth: 250, maxWidth: 250, flexShrink: 0, boxSizing: 'border-box', color: '#fff', padding: '44px 24px', fontSize: 12 }}>
+        {!b.isPage2 ? (
+          <>
+            <div style={{ width: 84, height: 84, borderRadius: '50%', background: 'rgba(255,255,255,.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 700, marginBottom: 6 }}>
+              {(b.name || 'U').trim().charAt(0).toUpperCase()}
+            </div>
+            <SH>Contact</SH>
+            {contacts(b).map((c, i) => <div key={i} style={{ marginBottom: 6, wordBreak: 'break-word', color: '#ffffff' }}>{c}</div>)}
+          </>
+        ) : null}
+        {some(d.skills) && <><SH>{b.isPage2 ? 'Skills (Cont.)' : 'Skills'}</SH>{d.skills.map((s, i) => <div key={i} style={{ marginBottom: 5, color: '#ffffff' }}>▪ {s}</div>)}</>}
         {some(d.education) && <><SH>Education</SH>{d.education.map((e) => (
           <div key={e.id} style={{ marginBottom: 10, color: '#ffffff' }}><strong>{e.school}</strong><div>{eduLine(e)}</div><div style={{ opacity: 0.85 }}>{[e.start, e.end].filter(Boolean).join(' – ')}</div></div>
         ))}</>}
@@ -39,20 +98,38 @@ function Modern({ d, accent, isWhiteText }) {
           <div key={c.id} style={{ marginBottom: 8, color: '#ffffff' }}><strong>{c.name}</strong><div style={{ opacity: 0.85 }}>{[c.issuer, c.year].filter(Boolean).join(' · ')}</div></div>
         ))}</>}
       </aside>
-      <main style={{ padding: '44px 38px 44px 34px' }}>
-        <h1 style={{ fontSize: 34, fontWeight: 800, lineHeight: 1.1 }}>{b.name || 'Your Name'}</h1>
-        <div style={{ fontSize: 15, color: accent, fontWeight: 600, marginTop: 4 }}>{b.title}</div>
-        {b.summary && <><H>Profile</H><p>{b.summary}</p></>}
-        {some(d.experience) && <><H>Experience</H>{d.experience.map((e) => (
-          <div key={e.id} style={{ marginBottom: 14 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}><strong style={{ fontSize: 14 }}>{e.role}</strong><span className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{dates(e)}</span></div>
-            <div style={{ color: accent, fontWeight: 600 }}>{[e.company, e.location].filter(Boolean).join(' · ')}</div>
-            <Bullets items={bulletsOf(e)} />
+      <main style={{ flex: 1, minWidth: 0, boxSizing: 'border-box', padding: '44px 38px 44px 34px' }}>
+        {b.isPage2 ? (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
           </div>
-        ))}</>}
-        {some(d.projects) && <><H>Projects</H>{d.projects.map((p) => (
-          <div key={p.id} style={{ marginBottom: 8 }}><strong>{p.name}</strong> {p.link && <span className="muted">· {p.link}</span>}<div>{p.description}</div></div>
-        ))}</>}
+        ) : (
+          <>
+            <h1 style={{ fontSize: 34, fontWeight: 800, lineHeight: 1.1, wordBreak: 'break-word' }}>{b.name || 'Your Name'}</h1>
+            <div style={{ fontSize: 15, color: accent, fontWeight: 600, marginTop: 4 }}>{b.title}</div>
+            {b.summary && <><H>Profile</H><p>{b.summary}</p></>}
+          </>
+        )}
+        {some(d.experience) && (
+          <>
+            <H style={b.isPage2 ? { marginTop: 0 } : {}}>{b.isPage2 ? 'Experience (Cont.)' : 'Experience'}</H>
+            {d.experience.map((e) => (
+              <div key={e.id} style={{ marginBottom: 14 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}><strong style={{ fontSize: 14 }}>{e.role}</strong><span className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{dates(e)}</span></div>
+                <div style={{ color: accent, fontWeight: 600 }}>{[e.company, e.location].filter(Boolean).join(' · ')}</div>
+                <Bullets items={bulletsOf(e)} />
+              </div>
+            ))}
+          </>
+        )}
+        {some(d.projects) && (
+          <>
+            <H style={b.isPage2 && !some(d.experience) ? { marginTop: 0 } : {}}>Projects</H>
+            {d.projects.map((p) => (
+              <ProjectRow key={p.id} p={p} accent={accent} />
+            ))}
+          </>
+        )}
       </main>
     </div>
   )
@@ -63,18 +140,24 @@ function Modern({ d, accent, isWhiteText }) {
    ===================================================================== */
 function Classic({ d, accent }) {
   const b = d.basics || {}
-  const H = ({ children }) => (
-    <h3 style={{ fontSize: 13, textTransform: 'uppercase', letterSpacing: 1.5, fontWeight: 700, borderBottom: `1.5px solid ${accent}`, color: accent, paddingBottom: 3, margin: '20px 0 10px' }}>{children}</h3>
+  const H = ({ children, style }) => (
+    <h3 style={{ fontSize: 13, textTransform: 'uppercase', letterSpacing: 1.5, fontWeight: 700, borderBottom: `1.5px solid ${accent}`, color: accent, paddingBottom: 3, margin: '20px 0 10px', ...style }}>{children}</h3>
   )
   return (
-    <div className="paper-body" style={{ padding: '52px 56px' }}>
-      <div style={{ textAlign: 'center' }}>
-        <h1 style={{ fontSize: 32, fontWeight: 700, letterSpacing: 1 }}>{b.name || 'Your Name'}</h1>
-        {b.title && <div style={{ fontSize: 14, fontStyle: 'italic', margin: '3px 0 6px', color: accent }}>{b.title}</div>}
-        <div className="muted" style={{ fontSize: 12 }}>{contacts(b).join('  •  ')}</div>
+    <div className="paper-body" style={{ padding: '52px 56px', minHeight: 1123, height: 1123, overflow: 'hidden' }}>
+      <div style={{ textAlign: b.isPage2 ? 'right' : 'center', marginBottom: b.isPage2 ? 12 : 0 }}>
+        {b.isPage2 ? (
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        ) : (
+          <>
+            <h1 style={{ fontSize: 32, fontWeight: 700, letterSpacing: 1 }}>{b.name || 'Your Name'}</h1>
+            {b.title && <div style={{ fontSize: 14, fontStyle: 'italic', margin: '3px 0 6px', color: accent }}>{b.title}</div>}
+            <div className="muted" style={{ fontSize: 12 }}>{contacts(b).join('  •  ')}</div>
+          </>
+        )}
       </div>
       {b.summary && <><H>Summary</H><p>{b.summary}</p></>}
-      {some(d.experience) && <><H>Professional Experience</H>{d.experience.map((e) => (
+      {some(d.experience) && <><H style={b.isPage2 ? { marginTop: 0 } : {}}>{b.isPage2 ? 'Experience (Cont.)' : 'Professional Experience'}</H>{d.experience.map((e) => (
         <div key={e.id} style={{ marginBottom: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}><strong>{e.company}{e.location && `, ${e.location}`}</strong><span className="muted" style={{ fontSize: 12 }}>{dates(e)}</span></div>
           <div style={{ fontStyle: 'italic', color: accent }}>{e.role}</div>
@@ -87,7 +170,7 @@ function Classic({ d, accent }) {
           <span className="muted" style={{ fontSize: 12 }}>{[e.start, e.end].filter(Boolean).join(' – ')}</span>
         </div>
       ))}</>}
-      {some(d.projects) && <><H>Projects</H>{d.projects.map((p) => <div key={p.id} style={{ marginBottom: 5 }}><strong>{p.name}</strong>: {p.description}</div>)}</>}
+      {some(d.projects) && <><H style={b.isPage2 && !some(d.experience) ? { marginTop: 0 } : {}}>Projects</H>{d.projects.map((p) => <ProjectRow key={p.id} p={p} accent={accent} />)}</>}
       {some(d.skills) && <><H>Skills</H><p>{d.skills.join('  •  ')}</p></>}
       {some(d.certifications) && <><H>Certifications</H>{d.certifications.map((c) => <div key={c.id}>{c.name}{c.issuer && `, ${c.issuer}`}{c.year && ` (${c.year})`}</div>)}</>}
     </div>
@@ -104,13 +187,19 @@ function Minimal({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '56px 60px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: '1px solid rgba(150,150,150,.2)', paddingBottom: 18 }}>
+      {!b.isPage2 ? (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: '1px solid rgba(150,150,150,.2)', paddingBottom: 18 }}>
         <div>
           <h1 style={{ fontSize: 30, fontWeight: 300, letterSpacing: 2, textTransform: 'uppercase' }}>{b.name || 'Your Name'}</h1>
           <div style={{ fontSize: 13, color: accent, letterSpacing: 1.5, marginTop: 4 }}>{b.title}</div>
         </div>
         <div className="muted" style={{ textAlign: 'right', fontSize: 11, lineHeight: 1.6 }}>{contacts(b).map((c, i) => <div key={i}>{c}</div>)}</div>
       </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <p style={{ margin: '18px 0' }}>{b.summary}</p>}
       {some(d.experience) && <><H>Experience</H>{d.experience.map((e) => (
         <div key={e.id} style={{ display: 'grid', gridTemplateColumns: '170px 1fr', gap: 16, marginBottom: 14 }}>
@@ -125,7 +214,7 @@ function Minimal({ d, accent }) {
         </div>
       ))}</>}
       {some(d.skills) && <><H>Skills</H><p>{d.skills.join(', ')}</p></>}
-      {some(d.projects) && <><H>Projects</H>{d.projects.map((p) => <div key={p.id} style={{ marginBottom: 6 }}><strong>{p.name}</strong> — {p.description}</div>)}</>}
+      {some(d.projects) && <><H>Projects</H>{d.projects.map((p) => <ProjectRow key={p.id} p={p} accent={accent} />)}</>}
       {some(d.certifications) && <><H>Certifications</H>{d.certifications.map((c) => <div key={c.id}>{c.name} {c.year && `· ${c.year}`}</div>)}</>}
     </div>
   )
@@ -145,7 +234,8 @@ function Executive({ d, accent, headerStyle }) {
   )
   return (
     <div className="paper-body">
-      <div style={{
+      {!b.isPage2 ? (
+        <div style={{
         background: isDark ? '#14142b' : 'rgba(240, 243, 246, 0.8)',
         color: isDark ? '#ffffff' : '#0f172a',
         padding: '42px 48px 34px',
@@ -157,8 +247,14 @@ function Executive({ d, accent, headerStyle }) {
         <div style={{ fontSize: 15, color: isDark ? '#cbd5e1' : '#475569', marginTop: 6, fontWeight: 600 }}>{b.title}</div>
         <div style={{ fontSize: 12, color: isDark ? '#94a3b8' : '#64748b', marginTop: 12 }}>{contacts(b).join('   |   ')}</div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 220px', gap: 30, padding: '16px 48px 44px' }}>
-        <div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
+      
+      <div style={{ display: 'flex', flexDirection: 'row', gap: 30, padding: '16px 48px 44px' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           {b.summary && <><H>Executive Summary</H><p>{b.summary}</p></>}
           {some(d.experience) && <><H>Career History</H>{d.experience.map((e) => (
             <div key={e.id} style={{ marginBottom: 14 }}>
@@ -167,9 +263,9 @@ function Executive({ d, accent, headerStyle }) {
               <Bullets items={bulletsOf(e)} />
             </div>
           ))}</>}
-          {some(d.projects) && <><H>Key Projects</H>{d.projects.map((p) => <div key={p.id} style={{ marginBottom: 6 }}><strong>{p.name}</strong> — {p.description}</div>)}</>}
+          {some(d.projects) && <><H>Key Projects</H>{d.projects.map((p) => <ProjectRow key={p.id} p={p} accent={accent} />)}</>}
         </div>
-        <div style={{ fontSize: 12 }}>
+        <div style={{ fontSize: 12, width: 220, minWidth: 220, flexShrink: 0 }}>
           {some(d.skills) && <><H>Expertise</H>{d.skills.map((s, i) => <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid rgba(150,150,150,.15)' }}>{s}</div>)}</>}
           {some(d.education) && <><H>Education</H>{d.education.map((e) => <div key={e.id} style={{ marginBottom: 8 }}><strong>{e.school}</strong><div>{eduLine(e)}</div><div className="muted">{[e.start, e.end].filter(Boolean).join(' – ')}</div></div>)}</>}
           {some(d.certifications) && <><H>Certifications</H>{d.certifications.map((c) => <div key={c.id} style={{ marginBottom: 6 }}>{c.name}<div className="muted">{[c.issuer, c.year].filter(Boolean).join(' · ')}</div></div>)}</>}
@@ -189,37 +285,43 @@ function Creative({ d, accent, headerStyle }) {
     <h3 style={{ fontSize: 15, fontWeight: 800, color: accent, margin: '22px 0 8px' }}>{children}</h3>
   )
   return (
-    <div className="paper-body">
-      <div style={{
-        background: isLight ? 'rgba(240, 243, 246, 0.9)' : `linear-gradient(120deg, ${accent}, ${accent}bb)`,
-        color: isLight ? '#0f172a' : '#ffffff',
-        padding: '42px 48px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 24
-      }}>
-        <div style={{ width: 92, height: 92, borderRadius: 26, background: isLight ? accent : 'rgba(255,255,255,.25)', color: '#fff', display: 'grid', placeItems: 'center', fontSize: 40, fontWeight: 800, flex: 'none', transform: 'rotate(-6deg)' }}>
-          {(b.name || 'U').trim().charAt(0).toUpperCase()}
+    <div className="paper-body" style={{ minHeight: 1123, height: 1123, overflow: 'hidden', boxSizing: 'border-box' }}>
+      {!b.isPage2 ? (
+        <div style={{
+          background: isLight ? 'rgba(240, 243, 246, 0.9)' : `linear-gradient(120deg, ${accent}, ${accent}bb)`,
+          color: isLight ? '#0f172a' : '#ffffff',
+          padding: '38px 48px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 24
+        }}>
+          <div style={{ width: 84, height: 84, borderRadius: 24, background: isLight ? accent : 'rgba(255,255,255,.25)', color: '#fff', display: 'grid', placeItems: 'center', fontSize: 36, fontWeight: 800, flex: 'none', transform: 'rotate(-6deg)' }}>
+            {(b.name || 'U').trim().charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <h1 style={{ fontSize: 32, fontWeight: 800, color: isLight ? '#0f172a' : '#ffffff', margin: 0 }}>{b.name || 'Your Name'}</h1>
+            <div style={{ fontSize: 15, color: isLight ? '#475569' : '#ffffff', opacity: 0.92, marginTop: 4 }}>{b.title}</div>
+            <div style={{ fontSize: 12, color: isLight ? '#64748b' : '#ffffff', opacity: 0.85, marginTop: 8 }}>{contacts(b).join('  ·  ')}</div>
+          </div>
         </div>
-        <div>
-          <h1 style={{ fontSize: 34, fontWeight: 800, color: isLight ? '#0f172a' : '#ffffff', margin: 0 }}>{b.name || 'Your Name'}</h1>
-          <div style={{ fontSize: 15, color: isLight ? '#475569' : '#ffffff', opacity: 0.92, marginTop: 4 }}>{b.title}</div>
-          <div style={{ fontSize: 12, color: isLight ? '#64748b' : '#ffffff', opacity: 0.85, marginTop: 8 }}>{contacts(b).join('  ·  ')}</div>
+      ) : (
+        <div style={{ padding: '24px 48px 0', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
         </div>
-      </div>
-      <div style={{ padding: '16px 48px 44px' }}>
+      )}
+      <div style={{ padding: b.isPage2 ? '12px 48px 40px' : '16px 48px 40px' }}>
         {b.summary && <><H>Hello 👋</H><p>{b.summary}</p></>}
         {some(d.skills) && <><H>Toolbox</H><div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{d.skills.map((s, i) => <span key={i} style={{ padding: '3px 11px', borderRadius: 99, background: `${accent}18`, color: accent, fontWeight: 600, fontSize: 12 }}>{s}</span>)}</div></>}
-        {some(d.experience) && <><H>Experience</H>{d.experience.map((e) => (
+        {some(d.experience) && <><H style={b.isPage2 ? { marginTop: 0 } : {}}>{b.isPage2 ? 'Experience (Cont.)' : 'Experience'}</H>{d.experience.map((e) => (
           <div key={e.id} style={{ marginBottom: 14, paddingLeft: 14, borderLeft: `3px solid ${accent}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><strong style={{ fontSize: 14 }}>{e.role}</strong><span className="muted" style={{ fontSize: 12 }}>{dates(e)}</span></div>
             <div style={{ color: accent, fontWeight: 600 }}>{[e.company, e.location].filter(Boolean).join(' · ')}</div>
             <Bullets items={bulletsOf(e)} />
           </div>
         ))}</>}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-          {some(d.education) && <div><H>Education</H>{d.education.map((e) => <div key={e.id} style={{ marginBottom: 8 }}><strong>{e.school}</strong><div>{eduLine(e)}</div><div className="muted" style={{ fontSize: 12 }}>{[e.start, e.end].filter(Boolean).join(' – ')}</div></div>)}</div>}
-          {some(d.projects) && <div><H>Projects</H>{d.projects.map((p) => <div key={p.id} style={{ marginBottom: 8 }}><strong>{p.name}</strong><div>{p.description}</div></div>)}</div>}
+        <div style={{ display: 'grid', gridTemplateColumns: some(d.education) && some(d.projects) ? '1fr 1fr' : '1fr', gap: 24 }}>
+          {some(d.education) && <div><H>Education</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} />)}</div>}
+          {some(d.projects) && <div><H>Projects</H>{d.projects.map((p) => <ProjectRow key={p.id} p={p} accent={accent} />)}</div>}
         </div>
         {some(d.certifications) && <><H>Certifications</H>{d.certifications.map((c) => <div key={c.id}>{c.name} {c.issuer && `· ${c.issuer}`} {c.year && `· ${c.year}`}</div>)}</>}
       </div>
@@ -239,13 +341,19 @@ function Tech({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '40px 44px', fontSize: 12.5 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: `2px solid ${accent}`, paddingBottom: 12 }}>
+      {!b.isPage2 ? (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: `2px solid ${accent}`, paddingBottom: 12 }}>
         <div>
           <h1 style={{ fontSize: 30, fontWeight: 800 }}>{b.name || 'Your Name'}</h1>
           <div style={{ fontFamily: "'Courier New', monospace", color: accent, fontWeight: 700 }}>&gt; {b.title}</div>
         </div>
         <div className="muted" style={{ textAlign: 'right', fontSize: 11.5 }}>{contacts(b).map((c, i) => <div key={i}>{c}</div>)}</div>
       </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <><H>summary</H><p>{b.summary}</p></>}
       {some(d.skills) && <><H>stack</H><div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>{d.skills.map((s, i) => <span key={i} style={{ fontFamily: "'Courier New', monospace", fontSize: 11.5, padding: '2px 8px', border: `1px solid ${accent}66`, borderRadius: 4, background: `${accent}0d` }}>{s}</span>)}</div></>}
       {some(d.experience) && <><H>experience</H>{d.experience.map((e) => (
@@ -260,8 +368,8 @@ function Tech({ d, accent }) {
           </div>
         </div>
       ))}</>}
-      {some(d.projects) && <><H>projects</H>{d.projects.map((p) => <div key={p.id} style={{ marginBottom: 5 }}><strong>{p.name}</strong> {p.link && <span style={{ color: accent }}>({p.link})</span>} — {p.description}</div>)}</>}
-      {some(d.education) && <><H>education</H>{d.education.map((e) => <div key={e.id}><strong>{e.school}</strong> — {eduLine(e)} <span className="muted">({[e.start, e.end].filter(Boolean).join('–')})</span></div>)}</>}
+      {some(d.projects) && <><H>projects</H>{d.projects.map((p) => <ProjectRow key={p.id} p={p} accent={accent} nameStyle={{ fontFamily: "'Courier New', monospace" }} />)}</>}
+      {some(d.education) && <><H>education</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} />)}</>}
       {some(d.certifications) && <><H>certifications</H>{d.certifications.map((c) => <div key={c.id}>{c.name} {c.issuer && `· ${c.issuer}`} {c.year && `· ${c.year}`}</div>)}</>}
     </div>
   )
@@ -280,7 +388,14 @@ function Metro({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ display: 'grid', gridTemplateColumns: '12px 1fr' }}>
-      <div style={{ background: accent }} />
+      {!b.isPage2 ? (
+        <div style={{ background: accent }} />
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
+      
       <div style={{ padding: '48px 52px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '3px solid rgba(150,150,150,.4)', paddingBottom: 16 }}>
           <div>
@@ -308,7 +423,7 @@ function Metro({ d, accent }) {
             <span key={i} style={{ padding: '3px 9px', background: `${accent}14`, border: `1px solid ${accent}44`, fontSize: 11, fontWeight: 600 }}>{s}</span>
           ))}</div></div>}
         </div>
-        {some(d.projects) && <><H num="05">Key Projects</H>{d.projects.map((p) => <div key={p.id} style={{ marginBottom: 6 }}><strong>{p.name}</strong> — {p.description}</div>)}</>}
+        {some(d.projects) && <><H num="05">Key Projects</H>{d.projects.map((p) => <ProjectRow key={p.id} p={p} accent={accent} />)}</>}
       </div>
     </div>
   )
@@ -324,7 +439,8 @@ function Compact({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '36px 40px', fontSize: 12, lineHeight: 1.45 }}>
-      <div style={{ borderBottom: '2px solid rgba(150,150,150,.3)', paddingBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+      {!b.isPage2 ? (
+        <div style={{ borderBottom: '2px solid rgba(150,150,150,.3)', paddingBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 800, lineHeight: 1 }}>{b.name || 'Your Name'}</h1>
           <div style={{ fontSize: 13, color: accent, fontWeight: 700, marginTop: 3 }}>{b.title}</div>
@@ -334,8 +450,14 @@ function Compact({ d, accent }) {
           <div>{[b.location, b.linkedin || b.website].filter(Boolean).join(' | ')}</div>
         </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 24, marginTop: 10 }}>
-        <div style={{ borderRight: '1px solid rgba(150,150,150,.2)', paddingRight: 20 }}>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
+      
+      <div style={{ display: 'flex', flexDirection: 'row', gap: 24, marginTop: 10 }}>
+        <div style={{ width: 220, minWidth: 220, flexShrink: 0, borderRight: '1px solid rgba(150,150,150,.2)', paddingRight: 20 }}>
           {some(d.skills) && <><H>Core Skills</H><div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>{d.skills.map((s, i) => (
             <span key={i} style={{ padding: '2px 7px', background: `${accent}14`, color: accent, fontWeight: 700, fontSize: 11, borderRadius: 3 }}>{s}</span>
           ))}</div></>}
@@ -344,7 +466,7 @@ function Compact({ d, accent }) {
           ))}</>}
           {some(d.certifications) && <><H>Certifications</H>{d.certifications.map((c) => <div key={c.id} style={{ marginBottom: 5 }}><strong>{c.name}</strong><div className="muted" style={{ fontSize: 10.5 }}>{[c.issuer, c.year].filter(Boolean).join(' · ')}</div></div>)}</>}
         </div>
-        <div>
+        <div style={{ flex: 1, minWidth: 0 }}>
           {b.summary && <><H>Professional Summary</H><p style={{ margin: 0 }}>{b.summary}</p></>}
           {some(d.experience) && <><H>Experience</H>{d.experience.map((e) => (
             <div key={e.id} style={{ marginBottom: 11 }}>
@@ -372,17 +494,20 @@ function Academic({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '54px 60px' }}>
-      <div style={{ textAlign: 'center', borderBottom: '3px double rgba(150,150,150,.4)', paddingBottom: 16 }}>
+      {!b.isPage2 ? (
+        <div style={{ textAlign: 'center', borderBottom: '3px double rgba(150,150,150,.4)', paddingBottom: 16 }}>
         <h1 style={{ fontSize: 32, fontWeight: 700, letterSpacing: 1.5, margin: 0 }}>{b.name || 'Your Name'}</h1>
         <div style={{ fontSize: 14, fontStyle: 'italic', color: accent, marginTop: 4 }}>{b.title}</div>
         <div className="muted" style={{ fontSize: 11.5, marginTop: 8 }}>{contacts(b).join('  ◆  ')}</div>
       </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <><H>Curriculum Vitae Overview</H><p style={{ textAlign: 'justify', lineHeight: 1.6 }}>{b.summary}</p></>}
       {some(d.education) && <><H>Academic Background</H>{d.education.map((e) => (
-        <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <div><strong>{e.school}</strong>, {eduLine(e)}{e.details && <div className="muted" style={{ fontSize: 11.5 }}>{e.details}</div>}</div>
-          <span className="muted" style={{ fontSize: 11.5 }}>{[e.start, e.end].filter(Boolean).join(' – ')}</span>
-        </div>
+        <EduRow key={e.id} e={e} accent={accent} />
       ))}</>}
       {some(d.experience) && <><H>Professional & Research Appointments</H>{d.experience.map((e) => (
         <div key={e.id} style={{ marginBottom: 14 }}>
@@ -409,12 +534,18 @@ function Elegant({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '60px 68px' }}>
-      <div style={{ textAlign: 'center', borderBottom: '1px solid rgba(150,150,150,.2)', paddingBottom: 22 }}>
+      {!b.isPage2 ? (
+        <div style={{ textAlign: 'center', borderBottom: '1px solid rgba(150,150,150,.2)', paddingBottom: 22 }}>
         <h1 style={{ fontSize: 38, fontWeight: 400, letterSpacing: 3, textTransform: 'uppercase', margin: 0 }}>{b.name || 'Your Name'}</h1>
         <div className="muted" style={{ fontSize: 13, fontStyle: 'italic', letterSpacing: 2, marginTop: 8 }}>{b.title}</div>
         <div style={{ width: 36, height: 1, background: accent, margin: '14px auto' }} />
         <div className="muted" style={{ fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase' }}>{contacts(b).join('   ·   ')}</div>
       </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <><H>Profile</H><p style={{ textAlign: 'center', maxWidth: 540, margin: '0 auto', fontStyle: 'italic', lineHeight: 1.7 }}>{b.summary}</p></>}
       {some(d.experience) && <><H>Experience</H>{d.experience.map((e) => (
         <div key={e.id} style={{ marginBottom: 16 }}>
@@ -427,10 +558,8 @@ function Elegant({ d, accent }) {
         </div>
       ))}</>}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
-        {some(d.education) && <div><H>Education</H>{d.education.map((e) => (
-          <div key={e.id} style={{ textAlign: 'center', marginBottom: 8 }}><strong>{e.school}</strong><div className="muted" style={{ fontStyle: 'italic' }}>{eduLine(e)}</div></div>
-        ))}</div>}
-        {some(d.skills) && <div><H>Competencies</H><div style={{ textAlign: 'center', lineHeight: 1.8, fontSize: 12 }}>{d.skills.join('  ·  ')}</div></div>}
+        {some(d.education) && <div><H>Education</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} />)}</div>}
+        {some(d.skills) && <div><H>Core Competencies</H><div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, padding: '0 6px' }}>{d.skills.map((s, i) => <span key={i} style={{ padding: '3px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, border: '1px solid rgba(150,150,150,.2)' }}>{s}</span>)}</div></div>}
       </div>
     </div>
   )
@@ -448,17 +577,23 @@ function Infographic({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '44px 50px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: `${accent}0d`, padding: '24px 28px', borderRadius: 12, border: `1px solid ${accent}33`, marginBottom: 18 }}>
-        <div>
-          <h1 style={{ fontSize: 32, fontWeight: 900, margin: 0 }}>{b.name || 'Your Name'}</h1>
-          <div style={{ fontSize: 14, fontWeight: 700, color: accent, marginTop: 4 }}>{b.title}</div>
+      {!b.isPage2 ? (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: `${accent}0d`, padding: '24px 28px', borderRadius: 12, border: `1px solid ${accent}33`, marginBottom: 18 }}>
+          <div>
+            <h1 style={{ fontSize: 32, fontWeight: 900, margin: 0 }}>{b.name || 'Your Name'}</h1>
+            <div style={{ fontSize: 14, fontWeight: 700, color: accent, marginTop: 4 }}>{b.title}</div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 11, textAlign: 'right' }}>
+            {contacts(b).map((c, i) => <span key={i} style={{ padding: '2px 8px', borderRadius: 99, background: 'rgba(255,255,255,.2)', border: '1px solid rgba(150,150,150,.2)' }}>{c}</span>)}
+          </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 11, textAlign: 'right' }}>
-          {contacts(b).map((c, i) => <span key={i} style={{ padding: '2px 8px', borderRadius: 99, background: 'rgba(255,255,255,.2)', border: '1px solid rgba(150,150,150,.2)' }}>{c}</span>)}
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
         </div>
-      </div>
+      )}
       {b.summary && <div style={{ background: `${accent}08`, padding: '14px 18px', borderRadius: 8, borderLeft: `4px solid ${accent}`, marginBottom: 16 }}><p style={{ margin: 0 }}>{b.summary}</p></div>}
-      {some(d.experience) && <><H>Career Milestones</H>{d.experience.map((e) => (
+      {some(d.experience) && <><H>{b.isPage2 ? 'Career Milestones (Cont.)' : 'Career Milestones'}</H>{d.experience.map((e) => (
         <div key={e.id} style={{ display: 'grid', gridTemplateColumns: '16px 1fr', gap: 12, marginBottom: 14 }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <span style={{ width: 10, height: 10, borderRadius: '50%', border: `2px solid ${accent}`, background: 'transparent' }} />
@@ -470,6 +605,10 @@ function Infographic({ d, accent }) {
           </div>
         </div>
       ))}</>}
+      {some(d.education) && <><H>Education & Credentials</H>{d.education.map((e) => (
+        <EduRow key={e.id} e={e} accent={accent} />
+      ))}</>}
+      {some(d.projects) && <><H>Key Projects</H>{d.projects.map((p) => <ProjectRow key={p.id} p={p} accent={accent} />)}</>}
       {some(d.skills) && <><H>Key Proficiencies</H><div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{d.skills.map((s, i) => <span key={i} style={{ padding: '4px 10px', borderRadius: 99, background: accent, color: '#fff', fontSize: 11, fontWeight: 700 }}>{s}</span>)}</div></>}
     </div>
   )
@@ -485,16 +624,22 @@ function Corporate({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '48px 52px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 20, borderBottom: `2px solid ${accent}`, paddingBottom: 18 }}>
-        <div style={{ width: 68, height: 68, borderRadius: 8, background: accent, color: '#fff', display: 'grid', placeItems: 'center', fontSize: 28, fontWeight: 900 }}>
-          {(b.name || 'U').charAt(0).toUpperCase()}
+      {!b.isPage2 ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, borderBottom: `2px solid ${accent}`, paddingBottom: 18 }}>
+          <div style={{ width: 68, height: 68, borderRadius: 8, background: accent, color: '#fff', display: 'grid', placeItems: 'center', fontSize: 28, fontWeight: 900 }}>
+            {(b.name || 'U').charAt(0).toUpperCase()}
+          </div>
+          <div style={{ flex: 1 }}>
+            <h1 style={{ fontSize: 32, fontWeight: 900, margin: 0, textTransform: 'uppercase', letterSpacing: 0.5 }}>{b.name || 'Your Name'}</h1>
+            <div style={{ fontSize: 14, fontWeight: 700, color: accent, textTransform: 'uppercase', letterSpacing: 1 }}>{b.title}</div>
+          </div>
+          <div className="muted" style={{ textAlign: 'right', fontSize: 11, lineHeight: 1.6 }}>{contacts(b).map((c, i) => <div key={i}>{c}</div>)}</div>
         </div>
-        <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: 32, fontWeight: 900, margin: 0, textTransform: 'uppercase', letterSpacing: 0.5 }}>{b.name || 'Your Name'}</h1>
-          <div style={{ fontSize: 14, fontWeight: 700, color: accent, textTransform: 'uppercase', letterSpacing: 1 }}>{b.title}</div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
         </div>
-        <div className="muted" style={{ textAlign: 'right', fontSize: 11, lineHeight: 1.6 }}>{contacts(b).map((c, i) => <div key={i}>{c}</div>)}</div>
-      </div>
+      )}
       {b.summary && <><H>Executive Summary</H><p style={{ padding: '0 6px' }}>{b.summary}</p></>}
       {some(d.experience) && <><H>Experience & Accomplishments</H>{d.experience.map((e) => (
         <div key={e.id} style={{ marginBottom: 12, padding: '0 6px' }}>
@@ -507,7 +652,7 @@ function Corporate({ d, accent }) {
         </div>
       ))}</>}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-        {some(d.education) && <div><H>Education</H>{d.education.map((e) => <div key={e.id} style={{ padding: '0 6px', marginBottom: 6 }}><strong>{e.school}</strong><div>{eduLine(e)}</div></div>)}</div>}
+        {some(d.education) && <div><H>Education</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} />)}</div>}
         {some(d.skills) && <div><H>Core Competencies</H><div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, padding: '0 6px' }}>{d.skills.map((s, i) => <span key={i} style={{ padding: '3px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, border: '1px solid rgba(150,150,150,.2)' }}>{s}</span>)}</div></div>}
       </div>
     </div>
@@ -524,13 +669,19 @@ function Nordic({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '52px 56px' }}>
-      <div style={{ marginBottom: 20 }}>
+      {!b.isPage2 ? (
+        <div style={{ marginBottom: 20 }}>
         <h1 style={{ fontSize: 34, fontWeight: 300, letterSpacing: 1 }}>{b.name || 'Your Name'}</h1>
         <div style={{ fontSize: 15, color: accent, fontWeight: 600, marginTop: 4 }}>{b.title}</div>
         <div className="muted" style={{ display: 'flex', flexWrap: 'wrap', gap: 16, fontSize: 12, marginTop: 12, borderTop: '1px solid rgba(150,150,150,.15)', paddingTop: 10 }}>
           {contacts(b).map((c, i) => <span key={i}>• {c}</span>)}
         </div>
       </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <p style={{ fontSize: 13.5, lineHeight: 1.65 }}>{b.summary}</p>}
       {some(d.experience) && <><H>Experience</H>{d.experience.map((e) => (
         <div key={e.id} style={{ marginBottom: 14 }}>
@@ -539,7 +690,7 @@ function Nordic({ d, accent }) {
         </div>
       ))}</>}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-        {some(d.education) && <div><H>Education</H>{d.education.map((e) => <div key={e.id} style={{ marginBottom: 8 }}><strong>{e.school}</strong><div>{eduLine(e)}</div></div>)}</div>}
+        {some(d.education) && <div><H>Education</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} />)}</div>}
         {some(d.skills) && <div><H>Expertise</H><div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>{d.skills.map((s, i) => <span key={i} style={{ padding: '2px 8px', borderRadius: 4, background: `${accent}14`, color: accent, fontSize: 11 }}>{s}</span>)}</div></div>}
       </div>
     </div>
@@ -558,13 +709,19 @@ function Silicon({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '44px 48px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `3px solid ${accent}`, paddingBottom: 16 }}>
+      {!b.isPage2 ? (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `3px solid ${accent}`, paddingBottom: 16 }}>
         <div>
           <h1 style={{ fontSize: 32, fontWeight: 900, margin: 0 }}>{b.name || 'Your Name'}</h1>
           <div style={{ fontSize: 14, fontWeight: 700, color: accent, marginTop: 4 }}>{b.title}</div>
         </div>
         <div className="muted" style={{ textAlign: 'right', fontSize: 11.5 }}>{contacts(b).map((c, i) => <div key={i}>{c}</div>)}</div>
       </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <div style={{ background: `${accent}0a`, padding: '12px 16px', borderRadius: 6, margin: '16px 0' }}><p style={{ margin: 0 }}>{b.summary}</p></div>}
       {some(d.experience) && <><H>Experience</H>{d.experience.map((e) => (
         <div key={e.id} style={{ marginBottom: 13 }}>
@@ -574,7 +731,7 @@ function Silicon({ d, accent }) {
       ))}</>}
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 20 }}>
         {some(d.skills) && <div><H>Technologies</H><div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>{d.skills.map((s, i) => <span key={i} style={{ padding: '3px 8px', borderRadius: 4, background: `${accent}14`, color: accent, fontSize: 11, fontWeight: 700 }}>{s}</span>)}</div></div>}
-        {some(d.education) && <div><H>Education</H>{d.education.map((e) => <div key={e.id} style={{ marginBottom: 6 }}><strong>{e.school}</strong><div>{eduLine(e)}</div></div>)}</div>}
+        {some(d.education) && <div><H>Education</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} />)}</div>}
       </div>
     </div>
   )
@@ -590,18 +747,25 @@ function Cascade({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '44px 48px' }}>
-      <div style={{ borderBottom: `4px solid ${accent}`, paddingBottom: 16, marginBottom: 16 }}>
+      {!b.isPage2 ? (
+        <div style={{ borderBottom: `4px solid ${accent}`, paddingBottom: 16, marginBottom: 16 }}>
         <h1 style={{ fontSize: 34, fontWeight: 900 }}>{b.name || 'Your Name'}</h1>
         <div style={{ fontSize: 15, fontWeight: 700, color: accent }}>{b.title}</div>
         <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>{contacts(b).join('  |  ')}</div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 28 }}>
-        <div style={{ borderRight: '1px solid rgba(150,150,150,.2)', paddingRight: 20 }}>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
+      
+      <div style={{ display: 'flex', flexDirection: 'row', gap: 28 }}>
+        <div style={{ width: 220, minWidth: 220, flexShrink: 0, borderRight: '1px solid rgba(150,150,150,.2)', paddingRight: 20 }}>
           {some(d.skills) && <><H>Competencies</H><div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>{d.skills.map((s, i) => <span key={i} style={{ padding: '2px 7px', borderRadius: 3, background: `${accent}14`, color: accent, fontSize: 11, fontWeight: 600 }}>{s}</span>)}</div></>}
-          {some(d.education) && <><H>Education</H>{d.education.map((e) => <div key={e.id} style={{ marginBottom: 8 }}><strong>{e.school}</strong><div>{eduLine(e)}</div></div>)}</>}
+          {some(d.education) && <><H>Education</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} />)}</>}
           {some(d.certifications) && <><H>Certifications</H>{d.certifications.map((c) => <div key={c.id} style={{ marginBottom: 6 }}><strong>{c.name}</strong></div>)}</>}
         </div>
-        <div>
+        <div style={{ flex: 1, minWidth: 0 }}>
           {b.summary && <><H>Executive Summary</H><p>{b.summary}</p></>}
           {some(d.experience) && <><H>Professional Experience</H>{d.experience.map((e) => (
             <div key={e.id} style={{ marginBottom: 14 }}>
@@ -627,11 +791,17 @@ function Zenith({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '44px 48px' }}>
-      <div style={{ textAlign: 'center', background: `${accent}10`, padding: '24px', borderRadius: 10, border: `1px solid ${accent}33`, marginBottom: 18 }}>
+      {!b.isPage2 ? (
+        <div style={{ textAlign: 'center', background: `${accent}10`, padding: '24px', borderRadius: 10, border: `1px solid ${accent}33`, marginBottom: 18 }}>
         <h1 style={{ fontSize: 32, fontWeight: 900, margin: 0 }}>{b.name || 'Your Name'}</h1>
         <div style={{ fontSize: 14, fontWeight: 700, color: accent, marginTop: 4 }}>{b.title}</div>
         <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>{contacts(b).join('  •  ')}</div>
       </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <p style={{ textAlign: 'center', maxWidth: 620, margin: '0 auto 16px' }}>{b.summary}</p>}
       {some(d.experience) && <><H>Experience</H>{d.experience.map((e) => (
         <div key={e.id} style={{ padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(150,150,150,.25)', marginBottom: 10 }}>
@@ -640,7 +810,7 @@ function Zenith({ d, accent }) {
         </div>
       ))}</>}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        {some(d.education) && <div><H>Education</H>{d.education.map((e) => <div key={e.id} style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid rgba(150,150,150,.2)', marginBottom: 6 }}><strong>{e.school}</strong><div>{eduLine(e)}</div></div>)}</div>}
+        {some(d.education) && <div><H>Education</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} />)}</div>}
         {some(d.skills) && <div><H>Skills</H><div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>{d.skills.map((s, i) => <span key={i} style={{ padding: '4px 9px', borderRadius: 6, background: `${accent}15`, color: accent, fontSize: 11, fontWeight: 600 }}>{s}</span>)}</div></div>}
       </div>
     </div>
@@ -657,7 +827,14 @@ function Nova({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ display: 'grid', gridTemplateColumns: '8px 1fr' }}>
-      <div style={{ background: accent }} />
+      {!b.isPage2 ? (
+        <div style={{ background: accent }} />
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
+      
       <div style={{ padding: '44px 48px' }}>
         <h1 style={{ fontSize: 34, fontWeight: 900 }}>{b.name || 'Your Name'}</h1>
         <div style={{ fontSize: 15, fontWeight: 700, color: accent }}>{b.title}</div>
@@ -670,7 +847,7 @@ function Nova({ d, accent }) {
           </div>
         ))}</>}
         {some(d.skills) && <><H>Core Skills</H><div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>{d.skills.map((s, i) => <span key={i} style={{ padding: '3px 8px', borderRadius: 4, background: `${accent}15`, color: accent, fontSize: 11, fontWeight: 600 }}>{s}</span>)}</div></>}
-        {some(d.education) && <><H>Education</H>{d.education.map((e) => <div key={e.id} style={{ marginBottom: 6 }}><strong>{e.school}</strong> — {eduLine(e)}</div>)}</>}
+        {some(d.education) && <><H>Education</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} />)}</>}
       </div>
     </div>
   )
@@ -686,13 +863,19 @@ function Matrix({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '40px 44px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '2px solid rgba(150,150,150,.3)', paddingBottom: 12 }}>
+      {!b.isPage2 ? (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '2px solid rgba(150,150,150,.3)', paddingBottom: 12 }}>
         <div>
           <h1 style={{ fontSize: 32, fontWeight: 900, margin: 0 }}>{b.name || 'Your Name'}</h1>
           <div style={{ fontSize: 14, fontWeight: 700, color: accent }}>{b.title}</div>
         </div>
         <div className="muted" style={{ textAlign: 'right', fontSize: 11 }}>{contacts(b).map((c, i) => <div key={i}>{c}</div>)}</div>
       </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <p style={{ margin: '12px 0' }}>{b.summary}</p>}
       {some(d.skills) && <><H>Technical & Analytical Matrix</H><div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, margin: '8px 0' }}>{d.skills.map((s, i) => <div key={i} style={{ padding: '4px 6px', borderRadius: 4, border: '1px solid rgba(150,150,150,.2)', fontSize: 11, textAlign: 'center', fontWeight: 600 }}>{s}</div>)}</div></>}
       {some(d.experience) && <><H>Experience & Performance</H>{d.experience.map((e) => (
@@ -702,7 +885,7 @@ function Matrix({ d, accent }) {
         </div>
       ))}</>}
       {some(d.projects) && <><H>Key Quantitative Projects</H>{d.projects.map((p) => <div key={p.id} style={{ marginBottom: 5 }}><strong>{p.name}</strong>: {p.description}</div>)}</>}
-      {some(d.education) && <><H>Education & Credentials</H>{d.education.map((e) => <div key={e.id}><strong>{e.school}</strong> — {eduLine(e)}</div>)}</>}
+      {some(d.education) && <><H>Education & Credentials</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} />)}</>}
     </div>
   )
 }
@@ -717,11 +900,17 @@ function Horizon({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '44px 50px' }}>
-      <div style={{ textAlign: 'center', borderBottom: `2px solid ${accent}`, paddingBottom: 16 }}>
+      {!b.isPage2 ? (
+        <div style={{ textAlign: 'center', borderBottom: `2px solid ${accent}`, paddingBottom: 16 }}>
         <h1 style={{ fontSize: 34, fontWeight: 900, margin: 0 }}>{b.name || 'Your Name'}</h1>
         <div style={{ fontSize: 14, fontWeight: 700, color: accent, marginTop: 4 }}>{b.title}</div>
         <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{contacts(b).join('  ·  ')}</div>
       </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <p style={{ textAlign: 'center', maxWidth: 600, margin: '14px auto 18px' }}>{b.summary}</p>}
       {some(d.experience) && <><H>Work History</H>{d.experience.map((e) => (
         <div key={e.id} style={{ marginBottom: 14 }}>
@@ -730,7 +919,7 @@ function Horizon({ d, accent }) {
         </div>
       ))}</>}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-        {some(d.education) && <div><H>Education</H>{d.education.map((e) => <div key={e.id} style={{ marginBottom: 6 }}><strong>{e.school}</strong><div>{eduLine(e)}</div></div>)}</div>}
+        {some(d.education) && <div><H>Education</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} />)}</div>}
         {some(d.skills) && <div><H>Skills</H><div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>{d.skills.map((s, i) => <span key={i} style={{ padding: '3px 8px', borderRadius: 4, background: `${accent}14`, color: accent, fontSize: 11, fontWeight: 600 }}>{s}</span>)}</div></div>}
       </div>
     </div>
@@ -747,11 +936,17 @@ function Prestige({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '52px 56px' }}>
-      <div style={{ borderBottom: `2px solid ${accent}`, paddingBottom: 16 }}>
+      {!b.isPage2 ? (
+        <div style={{ borderBottom: `2px solid ${accent}`, paddingBottom: 16 }}>
         <h1 style={{ fontSize: 32, fontWeight: 700 }}>{b.name || 'Your Name'}</h1>
         <div style={{ fontSize: 14, fontStyle: 'italic', color: accent }}>{b.title}</div>
         <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>{contacts(b).join('  ◆  ')}</div>
       </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <p style={{ fontStyle: 'italic', margin: '14px 0' }}>{b.summary}</p>}
       {some(d.experience) && <><H>Executive Leadership & Experience</H>{d.experience.map((e) => (
         <div key={e.id} style={{ marginBottom: 14 }}>
@@ -761,7 +956,7 @@ function Prestige({ d, accent }) {
         </div>
       ))}</>}
       {some(d.skills) && <><H>Core Strengths</H><p>{d.skills.join('  •  ')}</p></>}
-      {some(d.education) && <><H>Credentials</H>{d.education.map((e) => <div key={e.id}><strong>{e.school}</strong> — {eduLine(e)}</div>)}</>}
+      {some(d.education) && <><H>Credentials</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} />)}</>}
     </div>
   )
 }
@@ -776,11 +971,17 @@ function Artisan({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '44px 50px' }}>
-      <div style={{ background: `${accent}14`, padding: '24px', borderRadius: 12, marginBottom: 16 }}>
+      {!b.isPage2 ? (
+        <div style={{ background: `${accent}14`, padding: '24px', borderRadius: 12, marginBottom: 16 }}>
         <h1 style={{ fontSize: 34, fontWeight: 900, margin: 0 }}>{b.name || 'Your Name'}</h1>
         <div style={{ fontSize: 15, fontWeight: 700, color: accent, marginTop: 4 }}>{b.title}</div>
         <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>{contacts(b).join('  ·  ')}</div>
       </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <p>{b.summary}</p>}
       {some(d.projects) && <><H>Project Highlights</H><div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>{d.projects.map((p) => (
         <div key={p.id} style={{ padding: '10px 14px', borderRadius: 8, border: `1px solid ${accent}33`, background: `${accent}08` }}>
@@ -808,9 +1009,17 @@ function Catalyst({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '44px 48px' }}>
-      <h1 style={{ fontSize: 32, fontWeight: 900 }}>{b.name || 'Your Name'}</h1>
+      {!b.isPage2 ? (
+        <>
+          <h1 style={{ fontSize: 32, fontWeight: 900 }}>{b.name || 'Your Name'}</h1>
       <div style={{ fontSize: 14, fontWeight: 700, color: accent }}>{b.title}</div>
       <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>{contacts(b).join('  |  ')}</div>
+        </>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <div style={{ padding: '10px 14px', borderRadius: 6, border: '1px solid rgba(150,150,150,.2)', marginBottom: 14 }}><p style={{ margin: 0 }}>{b.summary}</p></div>}
       {some(d.experience) && <><H>Key Results & Impact</H>{d.experience.map((e) => (
         <div key={e.id} style={{ marginBottom: 12 }}>
@@ -820,7 +1029,7 @@ function Catalyst({ d, accent }) {
       ))}</>}
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 20 }}>
         {some(d.skills) && <div><H>Core Competencies</H><div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>{d.skills.map((s, i) => <span key={i} style={{ padding: '3px 8px', borderRadius: 4, background: `${accent}14`, color: accent, fontSize: 11, fontWeight: 700 }}>{s}</span>)}</div></div>}
-        {some(d.education) && <div><H>Education</H>{d.education.map((e) => <div key={e.id}><strong>{e.school}</strong><div>{eduLine(e)}</div></div>)}</div>}
+        {some(d.education) && <div><H>Education</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} />)}</div>}
       </div>
     </div>
   )
@@ -836,11 +1045,17 @@ function Vanguard({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '44px 48px' }}>
-      <div style={{ borderLeft: `6px solid ${accent}`, paddingLeft: 16, marginBottom: 18 }}>
+      {!b.isPage2 ? (
+        <div style={{ borderLeft: `6px solid ${accent}`, paddingLeft: 16, marginBottom: 18 }}>
         <h1 style={{ fontSize: 34, fontWeight: 900, margin: 0 }}>{b.name || 'Your Name'}</h1>
         <div style={{ fontSize: 15, fontWeight: 700, color: accent }}>{b.title}</div>
         <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{contacts(b).join('  •  ')}</div>
       </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <p>{b.summary}</p>}
       {some(d.experience) && <><H>Experience Track</H>{d.experience.map((e) => (
         <div key={e.id} style={{ marginBottom: 14 }}>
@@ -850,7 +1065,7 @@ function Vanguard({ d, accent }) {
         </div>
       ))}</>}
       {some(d.skills) && <><H>Skills</H><div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>{d.skills.map((s, i) => <span key={i} style={{ padding: '3px 8px', borderRadius: 4, border: `1px solid ${accent}44`, fontSize: 11, fontWeight: 600 }}>{s}</span>)}</div></>}
-      {some(d.education) && <><H>Education</H>{d.education.map((e) => <div key={e.id}><strong>{e.school}</strong> — {eduLine(e)}</div>)}</>}
+      {some(d.education) && <><H>Education</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} />)}</>}
     </div>
   )
 }
@@ -865,11 +1080,17 @@ function Prime({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '48px 52px' }}>
-      <div style={{ textAlign: 'center', marginBottom: 18 }}>
+      {!b.isPage2 ? (
+        <div style={{ textAlign: 'center', marginBottom: 18 }}>
         <h1 style={{ fontSize: 30, fontWeight: 800 }}>{b.name || 'Your Name'}</h1>
         <div style={{ fontSize: 14, color: accent, fontWeight: 600 }}>{b.title}</div>
         <div className="muted" style={{ fontSize: 11.5, marginTop: 6 }}>{contacts(b).join('  |  ')}</div>
       </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <><H>Professional Profile</H><p>{b.summary}</p></>}
       {some(d.experience) && <><H>Work Experience</H>{d.experience.map((e) => (
         <div key={e.id} style={{ marginBottom: 12 }}>
@@ -878,7 +1099,7 @@ function Prime({ d, accent }) {
         </div>
       ))}</>}
       {some(d.skills) && <><H>Core Skills</H><p>{d.skills.join('  •  ')}</p></>}
-      {some(d.education) && <><H>Education</H>{d.education.map((e) => <div key={e.id}><strong>{e.school}</strong> — {eduLine(e)}</div>)}</>}
+      {some(d.education) && <><H>Education</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} />)}</>}
     </div>
   )
 }
@@ -895,11 +1116,17 @@ function Frontier({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '40px 44px', border: `1px solid ${accent}44`, margin: 16 }}>
-      <div style={{ borderBottom: `2px solid ${accent}`, paddingBottom: 12 }}>
+      {!b.isPage2 ? (
+        <div style={{ borderBottom: `2px solid ${accent}`, paddingBottom: 12 }}>
         <h1 style={{ fontSize: 30, fontWeight: 900 }}>{b.name || 'Your Name'}</h1>
         <div style={{ fontSize: 14, fontWeight: 700, color: accent }}>{b.title}</div>
         <div className="muted" style={{ fontSize: 11.5, marginTop: 6 }}>{contacts(b).join('  //  ')}</div>
       </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <><H>Executive Summary</H><p>{b.summary}</p></>}
       {some(d.experience) && <><H>Engineering & Project History</H>{d.experience.map((e) => (
         <div key={e.id} style={{ marginBottom: 12 }}>
@@ -908,7 +1135,7 @@ function Frontier({ d, accent }) {
         </div>
       ))}</>}
       {some(d.skills) && <><H>Technical Proficiencies</H><div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>{d.skills.map((s, i) => <span key={i} style={{ padding: '2px 8px', border: `1px solid ${accent}66`, fontSize: 11 }}>{s}</span>)}</div></>}
-      {some(d.education) && <><H>Academic Qualifications</H>{d.education.map((e) => <div key={e.id}><strong>{e.school}</strong> — {eduLine(e)}</div>)}</>}
+      {some(d.education) && <><H>Academic Qualifications</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} />)}</>}
     </div>
   )
 }
@@ -923,9 +1150,17 @@ function Odyssey({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '44px 50px' }}>
-      <h1 style={{ fontSize: 32, fontWeight: 900 }}>{b.name || 'Your Name'}</h1>
+      {!b.isPage2 ? (
+        <>
+          <h1 style={{ fontSize: 32, fontWeight: 900 }}>{b.name || 'Your Name'}</h1>
       <div style={{ fontSize: 14, fontWeight: 600, color: accent }}>{b.title}</div>
       <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>{contacts(b).join('  ·  ')}</div>
+        </>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <p>{b.summary}</p>}
       {some(d.experience) && <><H>Career Milestones</H>{d.experience.map((e, idx) => (
         <div key={e.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr', gap: 12, marginBottom: 12 }}>
@@ -937,7 +1172,7 @@ function Odyssey({ d, accent }) {
         </div>
       ))}</>}
       {some(d.skills) && <><H>Skills</H><p>{d.skills.join(', ')}</p></>}
-      {some(d.education) && <><H>Education</H>{d.education.map((e) => <div key={e.id}><strong>{e.school}</strong> — {eduLine(e)}</div>)}</>}
+      {some(d.education) && <><H>Education</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} />)}</>}
     </div>
   )
 }
@@ -952,12 +1187,18 @@ function Sovereign({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '52px 56px' }}>
-      <div style={{ textAlign: 'center', marginBottom: 20 }}>
+      {!b.isPage2 ? (
+        <div style={{ textAlign: 'center', marginBottom: 20 }}>
         <div style={{ width: 56, height: 56, borderRadius: '50%', border: `2px solid ${accent}`, color: accent, display: 'grid', placeItems: 'center', margin: '0 auto 8px', fontSize: 24, fontWeight: 800 }}>{(b.name || 'U').charAt(0)}</div>
         <h1 style={{ fontSize: 32, fontWeight: 700, margin: 0 }}>{b.name || 'Your Name'}</h1>
         <div style={{ fontSize: 14, fontStyle: 'italic', color: accent }}>{b.title}</div>
         <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{contacts(b).join('  ◆  ')}</div>
       </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <p style={{ textAlign: 'center', fontStyle: 'italic' }}>{b.summary}</p>}
       {some(d.experience) && <><H>Distinguished Experience</H>{d.experience.map((e) => (
         <div key={e.id} style={{ marginBottom: 14 }}>
@@ -967,7 +1208,7 @@ function Sovereign({ d, accent }) {
         </div>
       ))}</>}
       {some(d.skills) && <><H>Core Disciplines</H><p style={{ textAlign: 'center' }}>{d.skills.join('  •  ')}</p></>}
-      {some(d.education) && <><H>Academic Background</H>{d.education.map((e) => <div key={e.id} style={{ textAlign: 'center' }}><strong>{e.school}</strong> — {eduLine(e)}</div>)}</>}
+      {some(d.education) && <><H>Academic Background</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} align="center" />)}</>}
     </div>
   )
 }
@@ -982,11 +1223,17 @@ function Monarch({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '48px 52px', border: `3px double ${accent}88`, margin: 16 }}>
-      <div style={{ textAlign: 'center', borderBottom: '1px solid rgba(150,150,150,.2)', paddingBottom: 16 }}>
+      {!b.isPage2 ? (
+        <div style={{ textAlign: 'center', borderBottom: '1px solid rgba(150,150,150,.2)', paddingBottom: 16 }}>
         <h1 style={{ fontSize: 34, fontWeight: 400, letterSpacing: 2 }}>{b.name || 'Your Name'}</h1>
         <div style={{ fontSize: 14, fontStyle: 'italic', color: accent }}>{b.title}</div>
         <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{contacts(b).join('   ·   ')}</div>
       </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <p style={{ textAlign: 'center', margin: '14px 0' }}>{b.summary}</p>}
       {some(d.experience) && <><H>Professional Background</H>{d.experience.map((e) => (
         <div key={e.id} style={{ marginBottom: 12 }}>
@@ -995,7 +1242,7 @@ function Monarch({ d, accent }) {
           <Bullets items={bulletsOf(e)} />
         </div>
       ))}</>}
-      {some(d.education) && <><H>Education</H>{d.education.map((e) => <div key={e.id} style={{ textAlign: 'center' }}><strong>{e.school}</strong> — {eduLine(e)}</div>)}</>}
+      {some(d.education) && <><H>Education</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} align="center" />)}</>}
       {some(d.skills) && <><H>Capabilities</H><p style={{ textAlign: 'center' }}>{d.skills.join('  ·  ')}</p></>}
     </div>
   )
@@ -1011,13 +1258,19 @@ function Alpine({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '40px 44px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `2px solid ${accent}`, paddingBottom: 12 }}>
+      {!b.isPage2 ? (
+        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `2px solid ${accent}`, paddingBottom: 12 }}>
         <div>
           <h1 style={{ fontSize: 32, fontWeight: 900 }}>{b.name || 'Your Name'}</h1>
           <div style={{ fontSize: 14, fontWeight: 700, color: accent }}>{b.title}</div>
         </div>
         <div className="muted" style={{ textAlign: 'right', fontSize: 11.5 }}>{contacts(b).map((c, i) => <div key={i}>{c}</div>)}</div>
       </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <div style={{ padding: '10px 14px', borderRadius: 6, border: '1px solid rgba(150,150,150,.2)', margin: '12px 0' }}><p style={{ margin: 0 }}>{b.summary}</p></div>}
       {some(d.experience) && <><H>Work Experience</H>{d.experience.map((e) => (
         <div key={e.id} style={{ padding: '10px 14px', borderRadius: 6, border: '1px solid rgba(150,150,150,.18)', marginBottom: 8 }}>
@@ -1026,7 +1279,7 @@ function Alpine({ d, accent }) {
         </div>
       ))}</>}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-        {some(d.education) && <div><H>Education</H>{d.education.map((e) => <div key={e.id} style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid rgba(150,150,150,.18)', marginBottom: 6 }}><strong>{e.school}</strong><div>{eduLine(e)}</div></div>)}</div>}
+        {some(d.education) && <div><H>Education</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} />)}</div>}
         {some(d.skills) && <div><H>Skills</H><div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>{d.skills.map((s, i) => <span key={i} style={{ padding: '3px 8px', borderRadius: 4, background: `${accent}15`, color: accent, fontSize: 11, fontWeight: 600 }}>{s}</span>)}</div></div>}
       </div>
     </div>
@@ -1043,9 +1296,17 @@ function Titan({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '48px 52px' }}>
-      <h1 style={{ fontSize: 38, fontWeight: 900, letterSpacing: -0.5, lineHeight: 1 }}>{b.name || 'Your Name'}</h1>
+      {!b.isPage2 ? (
+        <>
+          <h1 style={{ fontSize: 38, fontWeight: 900, letterSpacing: -0.5, lineHeight: 1 }}>{b.name || 'Your Name'}</h1>
       <div style={{ fontSize: 16, fontWeight: 800, color: accent, textTransform: 'uppercase', letterSpacing: 1.5, marginTop: 4 }}>{b.title}</div>
       <div className="muted" style={{ fontSize: 12, margin: '8px 0 16px' }}>{contacts(b).join('  |  ')}</div>
+        </>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <p style={{ fontSize: 13.5, lineHeight: 1.6 }}>{b.summary}</p>}
       {some(d.experience) && <><H>Executive Leadership Track</H>{d.experience.map((e) => (
         <div key={e.id} style={{ marginBottom: 14 }}>
@@ -1056,7 +1317,7 @@ function Titan({ d, accent }) {
       ))}</>}
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 24 }}>
         {some(d.skills) && <div><H>Core Competencies</H><p>{d.skills.join('  •  ')}</p></div>}
-        {some(d.education) && <div><H>Education</H>{d.education.map((e) => <div key={e.id}><strong>{e.school}</strong> — {eduLine(e)}</div>)}</div>}
+        {some(d.education) && <div><H>Education</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} />)}</div>}
       </div>
     </div>
   )
@@ -1072,11 +1333,17 @@ function Element({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '44px 48px' }}>
-      <div style={{ background: `${accent}10`, padding: '24px 28px', borderRadius: 12, border: `1px solid ${accent}25`, marginBottom: 16 }}>
+      {!b.isPage2 ? (
+        <div style={{ background: `${accent}10`, padding: '24px 28px', borderRadius: 12, border: `1px solid ${accent}25`, marginBottom: 16 }}>
         <h1 style={{ fontSize: 32, fontWeight: 800, margin: 0 }}>{b.name || 'Your Name'}</h1>
         <div style={{ fontSize: 14, fontWeight: 700, color: accent, marginTop: 4 }}>{b.title}</div>
         <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>{contacts(b).join('   ·   ')}</div>
       </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <p>{b.summary}</p>}
       {some(d.experience) && <><H>Experience</H>{d.experience.map((e) => (
         <div key={e.id} style={{ marginBottom: 12 }}>
@@ -1085,7 +1352,7 @@ function Element({ d, accent }) {
         </div>
       ))}</>}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-        {some(d.education) && <div><H>Education</H>{d.education.map((e) => <div key={e.id}><strong>{e.school}</strong> — {eduLine(e)}</div>)}</div>}
+        {some(d.education) && <div><H>Education</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} />)}</div>}
         {some(d.skills) && <div><H>Skills</H><div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>{d.skills.map((s, i) => <span key={i} style={{ padding: '3px 8px', borderRadius: 6, background: `${accent}15`, color: accent, fontSize: 11, fontWeight: 600 }}>{s}</span>)}</div></div>}
       </div>
     </div>
@@ -1102,11 +1369,17 @@ function Atlas({ d, accent }) {
   )
   return (
     <div className="paper-body" style={{ padding: '48px 52px' }}>
-      <div style={{ borderBottom: `3px solid ${accent}`, paddingBottom: 16 }}>
+      {!b.isPage2 ? (
+        <div style={{ borderBottom: `3px solid ${accent}`, paddingBottom: 16 }}>
         <h1 style={{ fontSize: 34, fontWeight: 900 }}>{b.name || 'Your Name'}</h1>
         <div style={{ fontSize: 15, fontWeight: 700, color: accent }}>{b.title}</div>
         <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{contacts(b).join('  |  ')}</div>
       </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{b.pageNum || 2}</span>
+        </div>
+      )}
       {b.summary && <><H>International Executive Profile</H><p>{b.summary}</p></>}
       {some(d.experience) && <><H>Global Engagements & Experience</H>{d.experience.map((e) => (
         <div key={e.id} style={{ marginBottom: 14 }}>
@@ -1116,7 +1389,7 @@ function Atlas({ d, accent }) {
         </div>
       ))}</>}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-        {some(d.education) && <div><H>Education & Credentials</H>{d.education.map((e) => <div key={e.id}><strong>{e.school}</strong> — {eduLine(e)}</div>)}</div>}
+        {some(d.education) && <div><H>Education & Credentials</H>{d.education.map((e) => <EduRow key={e.id} e={e} accent={accent} />)}</div>}
         {some(d.skills) && <div><H>Core Competencies</H><p>{d.skills.join('  •  ')}</p></div>}
       </div>
     </div>
@@ -1162,10 +1435,161 @@ const MAP = {
   quantum: Tech,
 }
 
-/** Renders a resume at native A4 size. Wrap in <ScaledPaper> to shrink. */
+/**
+ * Splits resume data cleanly across A4 pages (Page 1, Page 2, Page 3, ...)
+ * so that no element, job entry, project, or paragraph is sliced in half or cut off at the bottom.
+ */
+export function paginateResumeData(d, template = 'modern') {
+  if (!d) return [{}]
+
+  const b = d.basics || {}
+  const exp = Array.isArray(d.experience) ? d.experience : []
+  const proj = Array.isArray(d.projects) ? d.projects : []
+  const edu = Array.isArray(d.education) ? d.education : []
+  const skills = Array.isArray(d.skills) ? d.skills : []
+  const certs = Array.isArray(d.certifications) ? d.certifications : []
+
+  // Check if template uses dedicated aside column for skills & education (only modern has an <aside>)
+  const isSidebar = template === 'modern'
+  // Templates that show skills near the top before experience
+  const isTopSkills = template === 'creative' || template === 'executive' || template === 'tech'
+
+  // Usable height limit on Page 1 (in px). Standard A4 is 1123px.
+  const MAX_PAGE_1_H = (template === 'creative' || template === 'infographic') ? 880 : 930
+  // Usable height limit on subsequent pages (Page 2, Page 3, ...).
+  const MAX_SUBSEQUENT_PAGE_H = 1025
+
+  // 1. Calculate Page 1 Base Header + Summary Height
+  let baseH = (template === 'creative' || template === 'executive' || template === 'infographic') ? 135 : 65
+  const sLen = (b.summary || '').length
+  if (sLen > 0) {
+    baseH += 26 + Math.ceil(sLen / 72) * 17 + 14
+  }
+
+  // Pre-experience skills only reduce Page 1 height for top-skills templates
+  let extraPreH = 0
+  if (isTopSkills && skills.length > 0) {
+    extraPreH += 28 + Math.ceil(skills.length / 5) * 20
+  }
+
+  const pages = []
+  let curExp = []
+  let curProj = []
+  let remH = MAX_PAGE_1_H - (baseH + extraPreH)
+  let curExpHNeeded = true
+  let curProjHNeeded = true
+
+  const startNewPage = () => {
+    pages.push({
+      experience: curExp,
+      projects: curProj,
+    })
+    curExp = []
+    curProj = []
+    remH = MAX_SUBSEQUENT_PAGE_H
+    curExpHNeeded = true
+    curProjHNeeded = true
+  }
+
+  // Distribute Experience entries
+  for (const e of exp) {
+    let itemH = 34 // role + company
+    const bullets = bulletsOf(e)
+    for (const bullet of bullets) {
+      itemH += Math.max(17, Math.ceil(bullet.length / 68) * 17)
+    }
+    itemH += 12 // margin
+
+    const neededH = (curExpHNeeded ? 28 : 0) + itemH
+    if (neededH > remH && (curExp.length > 0 || pages.length > 0)) {
+      startNewPage()
+    }
+
+    if (curExpHNeeded) {
+      remH -= 28
+      curExpHNeeded = false
+    }
+    curExp.push(e)
+    remH -= itemH
+  }
+
+  // Distribute Projects entries
+  for (const p of proj) {
+    const descLen = (p.description || '').length
+    let itemH = 20 + (descLen > 0 ? Math.ceil(descLen / 70) * 16 + 2 : 0) + 10
+    // In creative, projects share a 2-column grid
+    if (template === 'creative') {
+      itemH = Math.ceil(itemH * 0.72)
+    }
+
+    const neededH = (curProjHNeeded ? 28 : 0) + itemH
+    if (neededH > remH && (curExp.length > 0 || curProj.length > 0 || pages.length > 0)) {
+      startNewPage()
+    }
+
+    if (curProjHNeeded) {
+      remH -= 28
+      curProjHNeeded = false
+    }
+    curProj.push(p)
+    remH -= itemH
+  }
+
+  // Push final page
+  pages.push({
+    experience: curExp,
+    projects: curProj,
+  })
+
+  // If only 1 page was needed, return single page
+  if (pages.length === 1) {
+    return [d]
+  }
+
+  return pages.map((pageData, index) => {
+    const isFirst = index === 0
+    const isLast = index === pages.length - 1
+
+    // In sidebar templates (modern), education lives in Page 1 aside.
+    // In non-sidebar templates, education always renders on the final page after all experiences,
+    // ensuring Career Milestones are never split or interrupted by education.
+    const pageEdu = isSidebar
+      ? (isFirst ? edu : [])
+      : (isLast ? edu : [])
+
+    // Skills placement: top-skills templates stay on Page 1; bottom-skills templates render on last page
+    const pageSkills = isSidebar
+      ? (isFirst ? skills : [])
+      : (isTopSkills ? (isFirst ? skills : []) : (isLast ? skills : []))
+
+    // Certifications always render on the last page (or sidebar for modern)
+    const pageCerts = isSidebar
+      ? (isFirst ? certs : [])
+      : (isLast ? certs : [])
+
+    return {
+      ...d,
+      basics: {
+        ...b,
+        isPage2: !isFirst,
+        pageNum: index + 1,
+        totalPages: pages.length,
+        summary: isFirst ? b.summary : '',
+      },
+      experience: pageData.experience,
+      projects: pageData.projects,
+      education: pageEdu,
+      skills: pageSkills,
+      certifications: pageCerts,
+    }
+  })
+}
+
+/** Renders a resume at native A4 size with clean multi-page pagination. Wrap in <ScaledPaper> to shrink. */
 export function ResumePaper({ data, template = 'modern', accent = '#6366f1', font = 'inter', headerStyle }) {
   const T = MAP[template] || Modern
   const serifDefault = (template === 'classic' || template === 'academic' || template === 'elegant' || template === 'prestige' || template === 'monarch') && font === 'inter' ? 'lora' : font
+  const pages = paginateResumeData(data, template)
 
   return (
     <div
@@ -1173,17 +1597,61 @@ export function ResumePaper({ data, template = 'modern', accent = '#6366f1', fon
       style={{
         fontFamily: FONTS[serifDefault]?.css || FONTS.inter.css,
         width: 794,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 28,
       }}
     >
-      <div className="paper">
-        <T
-          d={data}
-          accent={accent}
-          headerStyle={headerStyle || data?.headerStyle || 'dark'}
-          textColor="#0f172a"
-          isWhiteText={false}
-        />
-      </div>
+      {pages.map((pData, idx) => (
+        <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 794 }}>
+          {idx > 0 && (
+            <div
+              className="page-break-badge no-print"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 12,
+                width: '100%',
+                margin: '10px 0 22px',
+                color: '#64748b',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                letterSpacing: 0.5,
+              }}
+            >
+              <div style={{ flex: 1, height: 1, background: '#cbd5e1' }} />
+              <span style={{ background: '#f8fafc', padding: '3px 12px', borderRadius: 999, border: '1px solid #cbd5e1', boxShadow: '0 2px 4px rgba(0,0,0,0.04)', fontWeight: 700, fontSize: '0.85rem' }}>
+                {idx + 1}
+              </span>
+              <div style={{ flex: 1, height: 1, background: '#cbd5e1' }} />
+            </div>
+          )}
+          <div
+            className="paper resume-page-sheet"
+            data-page={idx + 1}
+            style={{
+              width: 794,
+              minHeight: 1123,
+              height: 1123,
+              overflow: 'hidden',
+              position: 'relative',
+              boxShadow: '0 20px 50px -15px rgba(15,23,42,0.18)',
+              borderRadius: 3,
+              background: '#ffffff',
+            }}
+          >
+            <T
+              d={pData}
+              accent={accent}
+              headerStyle={headerStyle || data?.headerStyle || 'dark'}
+              textColor="#0f172a"
+              isWhiteText={false}
+            />
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

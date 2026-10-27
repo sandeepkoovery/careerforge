@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft, Download, ChevronDown, ChevronUp, Plus, Trash2, Sparkles, Loader2, Check, User, FileText, Briefcase,
   GraduationCap, Wrench, FolderGit2, Award, X, ArrowUp, ArrowDown, Eye, Pencil, ScanSearch, Crown, Printer, LayoutTemplate, Lock,
-  CheckCircle2, AlertCircle, Shield, Clock, AlertTriangle
+  CheckCircle2, AlertCircle, Shield, Clock, AlertTriangle, Upload
 } from 'lucide-react'
 import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
@@ -78,8 +78,37 @@ export default function Builder() {
   const [sampleSuccess, setSampleSuccess] = useState('')
   const [targetTplName, setTargetTplName] = useState('')
   const [downloading, setDownloading] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [previewMode, setPreviewMode] = useState('live') // 'live' | 'sample'
+  const [selectedSampleProf, setSelectedSampleProf] = useState('dev')
+  const importInputRef = useRef(null)
   const paneRef = useRef()
   const dirty = useRef(false)
+
+  const handleImportFile = async (file) => {
+    if (!file) return
+    setImporting(true)
+    setErr('')
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await api.post('/resumes/import', fd)
+      if (res?.resume) {
+        dirty.current = false
+        setResume({ ...res.resume, data: normalise(res.resume.data) })
+        setPreviewMode('live')
+        nav(`/builder/${res.resume.id}`, { replace: true })
+        const importedName = res.resume.data?.basics?.name || res.resume.title || 'Resume'
+        setSampleSuccess(`Successfully imported "${importedName}"!`)
+        setTimeout(() => setSampleSuccess(''), 4500)
+      }
+    } catch (e) {
+      setErr(e.message || 'Failed to import resume.')
+    } finally {
+      setImporting(false)
+      if (importInputRef.current) importInputRef.current.value = ''
+    }
+  }
 
   const resetToBlank = (confirmPrompt = false) => {
     if (confirmPrompt && !isEmpty && !window.confirm('Clear all fields to start a blank custom resume?')) {
@@ -197,7 +226,7 @@ export default function Builder() {
   })
   const exp = list('experience', { role: '', company: '', location: '', start: '', end: '', current: false, bullets: [''] })
   const edu = list('education', { school: '', degree: '', field: '', start: '', end: '', details: '' })
-  const proj = list('projects', { name: '', link: '', description: '' })
+  const proj = list('projects', { name: '', link: '', description: '', period: '' })
   const cert = list('certifications', { name: '', issuer: '', year: '' })
 
   if (err && !resume) return <div className="empty"><p>{err}</p><Link to="/dashboard" className="btn" style={{ marginTop: 16 }}>Back to dashboard</Link></div>
@@ -205,6 +234,10 @@ export default function Builder() {
 
   const d = resume.data
   const isEmpty = !d.basics.name && d.experience.length === 0 && d.skills.length === 0
+  const isMostlyEmpty = d.experience.length === 0 && d.skills.length === 0 && d.education.length === 0
+
+  const activeSampleData = PROFESSIONS.find((p) => p.id === selectedSampleProf)?.data || SAMPLE
+  const displayedData = previewMode === 'sample' ? activeSampleData : d
 
   const loadSample = () => mutate((r) => {
     const s = structuredClone(SAMPLE)
@@ -344,7 +377,19 @@ export default function Builder() {
         <span className="muted small row" style={{ gap: 6, minWidth: 70 }}>
           {status === 'saving' ? <><Loader2 size={14} className="spin" /> Saving</> : status === 'error' ? <span style={{ color: 'var(--bad)' }}>Not saved</span> : <><Check size={14} color="#10b981" /> Saved</>}
         </span>
-        <button className="btn btn-icon mobile-switch" onClick={() => setView(view === 'edit' ? 'preview' : 'edit')}>{view === 'edit' ? <Eye size={16} /> : <Pencil size={16} />}</button>
+        <input ref={importInputRef} type="file" hidden accept=".pdf,.docx,.txt" onChange={(e) => handleImportFile(e.target.files?.[0])} />
+
+        <button
+          id="btn-top-import"
+          className="btn btn-outline row"
+          style={{ gap: 6, fontSize: '0.84rem' }}
+          onClick={() => importInputRef.current?.click()}
+          disabled={importing}
+          title="Upload and parse an existing PDF, DOCX or TXT resume"
+        >
+          {importing ? <Loader2 size={16} className="spin" /> : <Upload size={16} />}
+          <span>{importing ? 'Importing…' : 'Import Resume'}</span>
+        </button>
 
         <button id="download-pdf" className="btn btn-primary row" style={{ gap: 6 }} onClick={handleDownloadPdf}>
           <Download size={16} /> Download PDF
@@ -362,7 +407,18 @@ export default function Builder() {
               <div className="row" style={{ gap: 6, color: '#4338ca', fontWeight: 700, fontSize: '0.88rem' }}>
                 <Sparkles size={16} /> <span>Resume Content Options:</span>
               </div>
-              <div className="row" style={{ gap: 6 }}>
+              <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
+                <button
+                  id="btn-import-in-card"
+                  className="btn btn-sm btn-outline row"
+                  style={{ fontSize: '0.76rem', padding: '3px 9px', gap: 5, color: '#0369a1', borderColor: '#7dd3fc', background: '#f0f9ff', fontWeight: 600 }}
+                  onClick={() => importInputRef.current?.click()}
+                  disabled={importing}
+                  title="Upload and parse an existing PDF, DOCX or TXT resume into this builder"
+                >
+                  {importing ? <Loader2 size={13} className="spin" /> : <Upload size={13} color="#0284c7" />}
+                  <span>{importing ? 'Importing…' : 'Import PDF/DOCX'}</span>
+                </button>
                 <button
                   id="btn-clear-blank"
                   className="btn btn-sm btn-outline row"
@@ -446,15 +502,30 @@ export default function Builder() {
             </div>
           )}
 
-          {isEmpty && (
-            <div className="alert alert-info row between" style={{ marginBottom: 14, background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1', padding: '10px 14px' }}>
-              <div className="row" style={{ gap: 8 }}>
-                <FileText size={18} color="#6366f1" />
-                <span><strong>Custom Edit Mode:</strong> Blank canvas ready. Type your details into the sections below.</span>
+          {isMostlyEmpty && (
+            <div className="alert alert-info row between" style={{ marginBottom: 14, background: '#eff6ff', color: '#1e40af', border: '1px solid #bfdbfe', padding: '10px 14px', borderRadius: 10, flexWrap: 'wrap', gap: 10 }}>
+              <div className="row" style={{ gap: 8, fontSize: '0.84rem' }}>
+                <Sparkles size={18} color="#2563eb" />
+                <span>Resume content is currently blank. Click <strong>Load Sample Data</strong> to preview how this template looks with full content, or import your resume.</span>
               </div>
-              <button className="btn btn-sm" style={{ fontSize: '0.76rem' }} onClick={() => setProfModalOpen(true)}>
-                <Sparkles size={13} /> Need sample content?
-              </button>
+              <div className="row" style={{ gap: 6 }}>
+                <button
+                  id="btn-quick-load-sample"
+                  className="btn btn-sm btn-primary"
+                  style={{ fontSize: '0.78rem', padding: '4px 10px', background: '#2563eb' }}
+                  onClick={() => loadProfession('dev')}
+                >
+                  💻 Load Sample Resume
+                </button>
+                <button
+                  id="btn-quick-import"
+                  className="btn btn-sm btn-outline"
+                  style={{ fontSize: '0.78rem', padding: '4px 10px', background: '#ffffff', color: '#1e40af', borderColor: '#bfdbfe' }}
+                  onClick={() => importInputRef.current?.click()}
+                >
+                  <Upload size={13} /> Import Resume
+                </button>
+              </div>
             </div>
           )}
           {err && <div className="alert alert-error" style={{ marginBottom: 14 }}>{err}</div>}
@@ -575,10 +646,11 @@ export default function Builder() {
                 <div className="row" style={{ marginBottom: 10 }}><strong className="small muted">Project {i + 1}</strong><span className="spacer" />
                   <button className="btn btn-icon btn-ghost btn-sm btn-danger" onClick={() => proj.del(i)}><Trash2 size={14} /></button></div>
                 <div className="field-row">
-                  <Field label="Name" value={p.name} onChange={(v) => proj.set(i, 'name', v)} />
-                  <Field label="Link" value={p.link} onChange={(v) => proj.set(i, 'link', v)} />
+                  <Field label="Project Name" value={p.name} onChange={(v) => proj.set(i, 'name', v)} placeholder="e.g. QR Code Restaurant Food Booking Application" />
+                  <Field label="Timeline / Date (optional)" value={p.period ?? p.date ?? ''} onChange={(v) => proj.set(i, 'period', v)} placeholder="e.g. Present or Nov 2021" />
                 </div>
-                <Field label="Description" textarea value={p.description} onChange={(v) => proj.set(i, 'description', v)} />
+                <Field label="Link (optional)" value={p.link} onChange={(v) => proj.set(i, 'link', v)} placeholder="e.g. github.com/... or app url" />
+                <Field label="Description" textarea value={p.description} onChange={(v) => proj.set(i, 'description', v)} placeholder="Describe the application, tech stack, and achievements..." />
               </div>
             ))}
             <button className="btn" style={{ width: '100%' }} onClick={proj.add}><Plus size={16} /> Add project</button>
@@ -601,15 +673,173 @@ export default function Builder() {
         </div>
 
         <div className="preview-pane" ref={paneRef}>
-          <ScaledPaper width={794 * scale} printable style={{ boxShadow: '0 20px 50px -15px rgba(15,23,42,0.18)', borderRadius: 3, flex: 'none' }}>
-            <ResumePaper
-              data={d}
-              template={resume.template}
-              accent={resume.accent}
-              font={resume.font}
-              headerStyle={d.headerStyle || 'dark'}
-            />
-          </ScaledPaper>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', maxWidth: '100%' }}>
+            {/* Right-Side Preview Mode Toolbar */}
+            <div
+              className="preview-toolbar"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                width: Math.min(paneW - 40, 794),
+                maxWidth: '100%',
+                background: '#ffffff',
+                padding: '8px 14px',
+                borderRadius: 12,
+                border: '1px solid var(--border)',
+                boxShadow: '0 4px 12px rgba(15,23,42,0.06)',
+                marginBottom: 14,
+                flexWrap: 'wrap',
+                gap: 8,
+              }}
+            >
+              <div className="row" style={{ gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#475569', marginRight: 2 }}>
+                  Preview:
+                </span>
+                <div className="row" style={{ background: '#f1f5f9', padding: 3, borderRadius: 8, gap: 2 }}>
+                  <button
+                    id="btn-preview-live"
+                    className={`btn btn-sm ${previewMode === 'live' ? 'btn-primary' : 'btn-ghost'}`}
+                    style={{ fontSize: '0.78rem', padding: '4px 10px', height: 'auto', borderRadius: 6 }}
+                    onClick={() => setPreviewMode('live')}
+                  >
+                    <User size={13} /> My Content
+                  </button>
+                  <button
+                    id="btn-preview-sample"
+                    className={`btn btn-sm ${previewMode === 'sample' ? 'btn-primary' : 'btn-ghost'}`}
+                    style={{ fontSize: '0.78rem', padding: '4px 10px', height: 'auto', borderRadius: 6, gap: 5 }}
+                    onClick={() => setPreviewMode('sample')}
+                  >
+                    <Sparkles size={13} color={previewMode === 'sample' ? '#fff' : '#6366f1'} />
+                    <span>Sample Dummy</span>
+                  </button>
+                </div>
+
+                {previewMode === 'sample' && (
+                  <select
+                    id="sample-prof-select"
+                    className="select"
+                    style={{ fontSize: '0.78rem', padding: '3px 8px', height: 28, background: '#f8fafc', borderColor: '#cbd5e1' }}
+                    value={selectedSampleProf}
+                    onChange={(e) => setSelectedSampleProf(e.target.value)}
+                    title="Switch sample dummy profession"
+                  >
+                    {PROFESSIONS.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.icon} {p.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              <div className="row" style={{ gap: 8, alignItems: 'center' }}>
+                {previewMode === 'sample' ? (
+                  <button
+                    id="btn-apply-dummy"
+                    className="btn btn-sm btn-outline row"
+                    style={{ fontSize: '0.76rem', padding: '4px 10px', height: 28, color: '#4f46e5', borderColor: '#c7d2fe', background: '#eef2ff' }}
+                    onClick={() => {
+                      loadProfession(selectedSampleProf)
+                      setPreviewMode('live')
+                    }}
+                    title="Load this sample dummy data into your editor form"
+                  >
+                    <Download size={12} /> Fill into My Resume
+                  </button>
+                ) : (
+                  <span className="badge badge-free" style={{ fontSize: '0.72rem', padding: '2px 7px' }}>
+                    Live Auto-Sync
+                  </span>
+                )}
+                <button
+                  className="btn btn-sm btn-ghost row"
+                  style={{ fontSize: '0.78rem', padding: '4px 8px', height: 28, color: '#0284c7' }}
+                  onClick={handleDownloadPdf}
+                  title="Open full PDF preview and export modal"
+                >
+                  <Eye size={13} /> Full PDF Modal
+                </button>
+              </div>
+            </div>
+
+            {previewMode === 'sample' && (
+              <div
+                style={{
+                  width: Math.min(paneW - 40, 794),
+                  maxWidth: '100%',
+                  marginBottom: 12,
+                  background: '#eff6ff',
+                  color: '#1e40af',
+                  border: '1px solid #bfdbfe',
+                  borderRadius: 8,
+                  padding: '7px 14px',
+                  fontSize: '0.8rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                }}
+              >
+                <div className="row" style={{ gap: 6 }}>
+                  <Sparkles size={14} color="#3b82f6" />
+                  <span>
+                    Viewing dummy sample template layout for <strong>{TEMPLATES.find((t) => t.id === resume.template)?.name || resume.template}</strong>.
+                  </span>
+                </div>
+                <button
+                  className="btn btn-sm btn-ghost"
+                  style={{ fontSize: '0.74rem', padding: '2px 8px', color: '#1d4ed8', textDecoration: 'underline' }}
+                  onClick={() => setPreviewMode('live')}
+                >
+                  Switch back to My Content
+                </button>
+              </div>
+            )}
+
+            {previewMode === 'live' && isEmpty && (
+              <div
+                style={{
+                  width: Math.min(paneW - 40, 794),
+                  maxWidth: '100%',
+                  marginBottom: 12,
+                  background: '#fffbeb',
+                  color: '#92400e',
+                  border: '1px solid #fde68a',
+                  borderRadius: 8,
+                  padding: '7px 14px',
+                  fontSize: '0.8rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                }}
+              >
+                <div className="row" style={{ gap: 6 }}>
+                  <span>⚠️ Your resume has no entries yet.</span>
+                </div>
+                <button
+                  className="btn btn-sm btn-outline"
+                  style={{ fontSize: '0.74rem', padding: '2px 8px', background: '#fff', color: '#b45309', borderColor: '#fcd34d' }}
+                  onClick={() => setPreviewMode('sample')}
+                >
+                  <Eye size={12} /> View Template with Sample Dummy Data
+                </button>
+              </div>
+            )}
+
+            <ScaledPaper width={794 * scale} printable style={{ boxShadow: '0 20px 50px -15px rgba(15,23,42,0.18)', borderRadius: 3, flex: 'none' }}>
+              <ResumePaper
+                data={displayedData}
+                template={resume.template}
+                accent={resume.accent}
+                font={resume.font}
+                headerStyle={displayedData.headerStyle || 'dark'}
+              />
+            </ScaledPaper>
+          </div>
         </div>
       </div>
 
@@ -883,33 +1113,95 @@ function PdfPreviewModal({ open, onClose, resume }) {
   const handleDirectDownload = async () => {
     setDownloading(true)
     setExportError('')
+    let exportContainer = null
     try {
-      const paperEl = previewRef.current?.querySelector('.paper')
-      if (!paperEl) throw new Error('Resume paper element not found in preview')
+      const sheets = Array.from(previewRef.current?.querySelectorAll('.resume-page-sheet') || [])
+      if (!sheets.length) {
+        const singlePaper = previewRef.current?.querySelector('.paper')
+        if (singlePaper) sheets.push(singlePaper)
+      }
+      if (!sheets.length) throw new Error('Resume paper element not found in preview')
 
-      const canvas = await html2canvas(paperEl, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-      })
+      // Ensure custom web fonts are fully loaded
+      if (document.fonts?.ready) {
+        await document.fonts.ready
+      }
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.98)
+      // Create an unscaled isolated sandbox container so parent modal zoom (transform: scale)
+      // does not distort html2canvas coordinate calculations and cause text overlapping
+      exportContainer = document.createElement('div')
+      exportContainer.style.position = 'fixed'
+      exportContainer.style.left = '-99999px'
+      exportContainer.style.top = '0'
+      exportContainer.style.width = '794px'
+      exportContainer.style.minHeight = '1123px'
+      exportContainer.style.zIndex = '-9999'
+      exportContainer.style.background = '#ffffff'
+      exportContainer.style.transform = 'none'
+      document.body.appendChild(exportContainer)
+
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4',
       })
 
-      const pdfWidth = pdf.internal.pageSize.getWidth() // 210 mm
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width // proportional height
+      for (let i = 0; i < sheets.length; i++) {
+        const sheet = sheets[i]
+        const clone = sheet.cloneNode(true)
+        clone.style.transform = 'none'
+        clone.style.margin = '0'
+        clone.style.boxShadow = 'none'
+        clone.style.width = '794px'
+        clone.style.height = '1123px'
+        clone.style.minHeight = '1123px'
+        clone.style.overflow = 'hidden'
 
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight)
+        exportContainer.appendChild(clone)
+        await new Promise((r) => setTimeout(r, 60))
+
+        const canvas = await html2canvas(clone, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+          width: 794,
+          height: 1123,
+          windowWidth: 794,
+          windowHeight: 1123,
+          onclone: (clonedDoc) => {
+            if (document.fonts) {
+              document.fonts.forEach((font) => {
+                try { clonedDoc.fonts.add(font) } catch {}
+              })
+            }
+          },
+        })
+
+        if (clone && clone.parentNode) {
+          exportContainer.removeChild(clone)
+        }
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.98)
+        if (i > 0) {
+          pdf.addPage()
+        }
+        pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST')
+      }
+
+      if (exportContainer && exportContainer.parentNode) {
+        exportContainer.parentNode.removeChild(exportContainer)
+        exportContainer = null
+      }
+
       pdf.save(fileName)
 
       setDownloadSuccess(true)
       setTimeout(() => setDownloadSuccess(false), 4500)
     } catch (e) {
+      if (exportContainer && exportContainer.parentNode) {
+        exportContainer.parentNode.removeChild(exportContainer)
+      }
       console.error('Direct PDF export error, falling back to print dialog', e)
       setExportError('Direct download encountered an issue. Opening standard print-to-PDF dialog...')
       setTimeout(() => window.print(), 1000)
@@ -949,9 +1241,9 @@ function PdfPreviewModal({ open, onClose, resume }) {
 
           {/* Zoom controls */}
           <div className="row" style={{ gap: 4, background: '#f8fafc', padding: '3px 6px', borderRadius: 8, border: '1px solid var(--border)' }}>
-            <button className={`btn btn-sm btn-ghost ${zoom === 0.5 ? 'btn-primary' : ''}`} style={{ padding: '4px 8px', fontSize: '0.78rem' }} onClick={() => setZoom(0.5)}>50%</button>
-            <button className={`btn btn-sm btn-ghost ${zoom === 0.75 ? 'btn-primary' : ''}`} style={{ padding: '4px 8px', fontSize: '0.78rem' }} onClick={() => setZoom(0.75)}>75%</button>
-            <button className={`btn btn-sm btn-ghost ${zoom === 1 ? 'btn-primary' : ''}`} style={{ padding: '4px 8px', fontSize: '0.78rem' }} onClick={() => setZoom(1)}>100%</button>
+            <button className={`btn btn-sm ${zoom === 0.5 ? 'btn-primary' : 'btn-ghost'}`} style={{ padding: '4px 10px', fontSize: '0.78rem', fontWeight: 600 }} onClick={() => setZoom(0.5)}>50%</button>
+            <button className={`btn btn-sm ${zoom === 0.75 ? 'btn-primary' : 'btn-ghost'}`} style={{ padding: '4px 10px', fontSize: '0.78rem', fontWeight: 600 }} onClick={() => setZoom(0.75)}>75%</button>
+            <button className={`btn btn-sm ${zoom === 1 ? 'btn-primary' : 'btn-ghost'}`} style={{ padding: '4px 10px', fontSize: '0.78rem', fontWeight: 600 }} onClick={() => setZoom(1)}>100%</button>
           </div>
 
           {/* Actions */}

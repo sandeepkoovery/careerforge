@@ -109,11 +109,13 @@ class ResumeController extends Controller
     public function import(Request $request, TextExtractor $extractor, ResumeImporter $importer, AtsAnalyzer $ats)
     {
         $request->validate(['file' => 'required|file|mimes:pdf,docx,txt|max:5120']);
-        $text = $extractor->extract($request->file('file'));
-        $data = $importer->import($text);
+        $file = $request->file('file');
+        $filename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $text = $extractor->extract($file);
+        $data = $importer->import($text, $filename, $request->user());
 
         $resume = $request->user()->resumes()->create([
-            'title' => pathinfo($request->file('file')->getClientOriginalName(), PATHINFO_FILENAME) ?: 'Imported Resume',
+            'title' => $filename ?: 'Imported Resume',
             'template' => 'modern',
             'data' => $data,
             'ats_score' => $ats->analyze($text)['score'],

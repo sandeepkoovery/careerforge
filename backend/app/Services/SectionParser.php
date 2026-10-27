@@ -47,6 +47,12 @@ class SectionParser
         if (! preg_match('/^\p{Lu}/u', $raw)) {
             return null;
         }
+        if (preg_match('/\b(pvt|ltd|llc|inc|corp|corporation)\b/i', $raw)) {
+            return null;
+        }
+        if (count($words) >= 2 && in_array('technologies', $words, true) && !in_array($words[0], ['core', 'key', 'technical', 'relevant', 'software'], true)) {
+            return null;
+        }
         foreach ($words as $w) {
             if (isset(self::KEYWORDS[$w])) {
                 return self::KEYWORDS[$w];
