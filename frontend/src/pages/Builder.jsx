@@ -1146,6 +1146,12 @@ function PdfPreviewModal({ open, onClose, resume }) {
         format: 'a4',
       })
 
+      // A4 dimensions in mm
+      const pageW = 210
+      const pageH = 297
+      // Conversion factor: px on screen → mm in PDF
+      const pxToMm = pageW / 794
+
       for (let i = 0; i < sheets.length; i++) {
         const sheet = sheets[i]
         const clone = sheet.cloneNode(true)
@@ -1160,6 +1166,7 @@ function PdfPreviewModal({ open, onClose, resume }) {
         exportContainer.appendChild(clone)
         await new Promise((r) => setTimeout(r, 60))
 
+        // 1) Render pixel-perfect image with html2canvas (preserves gradients, colours, layout)
         const canvas = await html2canvas(clone, {
           scale: 2,
           useCORS: true,
@@ -1178,15 +1185,53 @@ function PdfPreviewModal({ open, onClose, resume }) {
           },
         })
 
-        if (clone && clone.parentNode) {
-          exportContainer.removeChild(clone)
-        }
-
-        const imgData = canvas.toDataURL('image/jpeg', 0.98)
         if (i > 0) {
           pdf.addPage()
         }
-        pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST')
+
+        // Add the image as the visual background layer
+        const imgData = canvas.toDataURL('image/jpeg', 0.98)
+        pdf.addImage(imgData, 'JPEG', 0, 0, pageW, pageH, undefined, 'FAST')
+
+        // 2) Walk all text nodes in the clone and add invisible, selectable text
+        //    in the same positions so PDF parsers / ATS systems can extract it.
+        //    renderingMode 'invisible' (PDF text mode 3) embeds real text that
+        //    pdf-parsers and ATS can read, but renders nothing visually — the
+        //    pixel-perfect image layer above handles all visuals.
+        const walker = document.createTreeWalker(clone, NodeFilter.SHOW_TEXT, null)
+        const containerRect = exportContainer.getBoundingClientRect()
+
+        let node
+        while ((node = walker.nextNode())) {
+          const text = node.textContent.trim()
+          if (!text) continue
+
+          const range = document.createRange()
+          range.selectNodeContents(node)
+          const rects = range.getClientRects()
+          if (!rects.length) continue
+
+          // Use the element's computed style for approximate sizing
+          const parent = node.parentElement
+          if (!parent) continue
+          const cs = window.getComputedStyle(parent)
+          const fontSize = parseFloat(cs.fontSize) || 12
+
+          pdf.setFontSize(fontSize * pxToMm * 2.83465) // px → mm → pt
+
+          // Get position relative to the export container
+          const rect = rects[0]
+          const x = (rect.left - containerRect.left) * pxToMm
+          const y = (rect.top - containerRect.top + fontSize * 0.85) * pxToMm
+
+          if (x >= 0 && x < pageW && y >= 0 && y < pageH) {
+            pdf.text(text, x, y, { renderingMode: 'invisible' })
+          }
+        }
+
+        if (clone && clone.parentNode) {
+          exportContainer.removeChild(clone)
+        }
       }
 
       if (exportContainer && exportContainer.parentNode) {
