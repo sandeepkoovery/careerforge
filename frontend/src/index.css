@@ -297,6 +297,15 @@ h1, h2, h3, h4 { font-family: var(--display); line-height: 1.15; letter-spacing:
 .paper p, .paper li, .paper div, .paper span { color: inherit; }
 .paper .muted { color: #64748b; }
 .paper ul { padding-left: 18px; } .paper li { margin: 2px 0; }
+.measure-sandbox,
+.measure-sandbox .paper-body,
+.measure-sandbox main,
+.measure-sandbox aside {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
 
 /* Print styling */
 @media print {
