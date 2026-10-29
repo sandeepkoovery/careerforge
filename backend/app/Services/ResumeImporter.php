@@ -109,6 +109,10 @@ class ResumeImporter
                 '/[|•·,–-]+/',
             ], ' ', $line));
             $cleaned = trim(preg_replace('/\s+/', ' ', $cleaned));
+            // Drop leftover contact labels ("Email:", "Phone:", "LinkedIn:" ...) once their values were removed,
+            // so they never end up as the candidate's name/title.
+            $cleaned = trim(preg_replace('/\b(?:e-?mail(?:\s*id)?|phone|mobile|mob|tel(?:ephone)?|contact(?:\s*(?:no|number))?|linkedin|github|website|portfolio|address)\s*:/i', ' ', $cleaned));
+            $cleaned = trim(preg_replace('/\s+/', ' ', $cleaned));
 
             if ($cleaned === '' || preg_match('/\d{4}|https?:|www\./i', $cleaned) || str_word_count($cleaned) > 5) {
                 continue;
